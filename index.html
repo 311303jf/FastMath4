@@ -203,6 +203,8 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <script>
 // ============================================================
 // DOMAINS — 4th Grade B.E.S.T. Math
@@ -847,7 +849,7 @@ function buildMockQuestion(mockIndex,category,i){
 // APP STATE
 // ============================================================
 let currentQuiz=[],currentIndex=0,answers=[],detailedAnswers=[],studentName='',currentTestMode='';
-let timerInterval=null,secondsLeft=0;
+let timerInterval=null,secondsLeft=0,notificationSent=false;
 
 
 function setText(id,value){
@@ -944,7 +946,7 @@ function startQuiz(domainIndex,practiceIndex){
   if(!saveName())return;
   const domain=BANKS.standard[domainIndex];
   currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex], domainIndex, practiceIndex).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];
+  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;
   currentTestMode=`${domain.title} — ${LEVELS[practiceIndex]}`;
   setText('qtitle', domain.title);
   setText('quizBenchmarkTop', LEVELS[practiceIndex]);
@@ -959,7 +961,7 @@ function startMock(mockIndex){
   currentQuiz=[];
   perCat.forEach((count,cat)=>{for(let i=0;i<count;i++){currentQuiz.push(buildMockQuestion(mockIndex,cat,i));}});
   currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz), null, null).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];
+  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;
   currentTestMode=MOCKS[mockIndex].title;
   setText('qtitle', MOCKS[mockIndex].title);
   setText('quizBenchmarkTop', 'Full Mock Exam');
@@ -1076,6 +1078,20 @@ function showResults(){
     }
   }
   renderBreakdown(correct,total);
+
+  const firstAnswer=detailedAnswers.find(a=>a);
+  const domainName=(firstAnswer && BANKS.standard[firstAnswer.category]) ? BANKS.standard[firstAnswer.category].title : currentTestMode;
+  const levelMatch=currentTestMode.match(/Level (\d)/);
+  const levelName=levelMatch ? `Level ${levelMatch[1]}` : (currentTestMode.includes('Mock') ? 'Mock Exam' : (firstAnswer?.level || 'Practice'));
+
+  sendParentNotification(
+    studentName,
+    domainName,
+    levelName,
+    correct,
+    total,
+    pct
+  );
 }
 
 function renderBreakdown(correct,total){
@@ -1108,6 +1124,7 @@ function goHome(){
 // INIT
 // ============================================================
 window.addEventListener('load',()=>{
+  initEmailNotifications();
   const saved=localStorage.getItem('fastMath4Name');
   if(saved){studentName=saved;const input=document.getElementById('studentName');if(input)input.value=saved;}
   renderHomeCards();
