@@ -34,6 +34,18 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
 .big{font-size:4.5rem;font-weight:900;color:var(--primary)}
 .breakdown{text-align:left;margin-top:20px;display:grid;gap:10px}
 .break-row{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px}
+
+.progress-panel{max-width:1100px;margin:18px auto;background:white;border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow);text-align:left}
+.progress-panel h3{margin:0 0 10px;color:#1e3a8a;font-size:1.05rem}
+.progress-list{display:grid;gap:10px;margin-top:10px}
+.progress-item{border:1px solid #dbeafe;background:#f8fbff;border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.progress-main{font-weight:800;color:#0f172a}
+.progress-sub{color:var(--muted);font-size:.83rem;margin-top:4px;line-height:1.35}
+.progress-score{font-weight:950;color:var(--primary);font-size:1.05rem;white-space:nowrap}
+.clear-progress{border:1px solid #ef4444;color:#dc2626;background:white;border-radius:999px;padding:8px 12px;font-weight:800;cursor:pointer;font-size:.8rem}
+.clear-progress:hover{background:#fee2e2}
+.empty-progress{color:var(--muted);font-size:.9rem;line-height:1.5}
+@media(max-width:650px){.progress-item{grid-template-columns:1fr}.progress-score{white-space:normal}}
 .bar{height:10px;border-radius:999px;background:#dbeafe;overflow:hidden;margin-top:8px}
 .barfill{height:100%;background:var(--primary)}
 .quiz-head{max-width:1000px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -125,6 +137,8 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
   <b>📚 About FASTMath4:</b> This app has <b>200 practice questions</b> across 5 difficulty levels and <b>3 full mock exams</b> with 40 questions each. The practice is organized around Florida 4th Grade B.E.S.T. Math skills to support FAST preparation. Start at Level 1 (Skill Building) and work your way up to Level 5 (Mastery Check). Each level gets harder — aim for 90%+ on all levels! 🎯
 </div>
 
+<div class="progress-panel" id="homeSessionProgress"></div>
+
 <div class="section-title">📊 FAST Reporting Categories</div>
 <div class="grid" id="domainCards"></div>
 
@@ -199,6 +213,7 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
   <p class="sub" id="rsub" style="font-size:1rem;margin:8px 0;"></p>
   <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;margin:14px 0;font-size:1rem;" id="message"></div>
   <div id="guardianNotice" style="background:#eef6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:16px;padding:14px 18px;margin:14px 0;font-weight:800;display:none;">📨 Result is being sent to your tutor/guardian.</div>
+  <div class="progress-panel" id="sessionProgressResults"></div>
   <div class="breakdown" id="breakdown"></div>
   <div class="breakdown" id="missedReview"></div>
   <button class="next" onclick="goHome()" style="margin-top:20px;">🏠 Back to Home</button>
@@ -891,7 +906,7 @@ function buildMockQuestion(mockIndex,category,i){
 // APP STATE
 // ============================================================
 let currentQuiz=[],currentIndex=0,answers=[],detailedAnswers=[],studentName='',currentTestMode='';
-let timerInterval=null,secondsLeft=0,notificationSent=false;
+let timerInterval=null,secondsLeft=0,notificationSent=false,resultSaved=false;
 
 
 function setText(id,value){
@@ -944,6 +959,7 @@ function renderHomeCards(){
     card.innerHTML=`<div class="icon">🏆</div><span class="tag">${m.tag}</span><h3>${m.title}</h3><p>${m.desc}</p><button class="btn" style="background:var(--gold)">Start Exam →</button>`;
     mockBox.appendChild(card);
   });
+  renderSessionProgress('homeSessionProgress');
 }
 
 // ============================================================
@@ -988,7 +1004,7 @@ function startQuiz(domainIndex,practiceIndex){
   if(!saveName())return;
   const domain=BANKS.standard[domainIndex];
   currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex], domainIndex, practiceIndex).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;
+  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;resultSaved=false;
   currentTestMode=`${domain.title} — ${LEVELS[practiceIndex]}`;
   setText('qtitle', domain.title);
   setText('quizBenchmarkTop', LEVELS[practiceIndex]);
@@ -1003,7 +1019,7 @@ function startMock(mockIndex){
   currentQuiz=[];
   perCat.forEach((count,cat)=>{for(let i=0;i<count;i++){currentQuiz.push(buildMockQuestion(mockIndex,cat,i));}});
   currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz), null, null).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;
+  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;resultSaved=false;
   currentTestMode=MOCKS[mockIndex].title;
   setText('qtitle', MOCKS[mockIndex].title);
   setText('quizBenchmarkTop', 'Full Mock Exam');
@@ -1123,6 +1139,11 @@ function showResults(){
   if(guardianNotice){guardianNotice.style.display='block';guardianNotice.textContent='📨 Result is being sent to your tutor/guardian.';}
   const missedBox=document.getElementById('missedReview');
   if(missedBox){missedBox.innerHTML='';}
+  if(!resultSaved){
+    saveAssignmentProgress(correct,total,pct);
+    resultSaved=true;
+  }
+  renderSessionProgress('sessionProgressResults');
   // Save progress
   const progress=JSON.parse(localStorage.getItem('fastMath4Progress')||'{}');
   const isMock=currentTestMode.includes('Mock');
@@ -1269,12 +1290,95 @@ function retryMissedConcepts(){
   answers=[];
   detailedAnswers=[];
   notificationSent=false;
+  resultSaved=false;
   currentTestMode='Retry Missed Concepts';
   document.getElementById('qtitle').textContent='Retry Missed Concepts';
   const benchTop=document.getElementById('quizBenchmarkTop'); if(benchTop) benchTop.textContent='New questions from missed concepts';
   showScreen('quiz');
   startTimer(Math.max(5, retryQuestions.length*3));
   renderQuestion();
+}
+
+
+// ============================================================
+// LOCAL PROGRESS TRACKING (browser/localStorage only)
+// ============================================================
+const PROGRESS_HISTORY_KEY='fastMath4AssignmentHistory';
+
+function getAssignmentHistory(){
+  try{
+    const data=JSON.parse(localStorage.getItem(PROGRESS_HISTORY_KEY)||'[]');
+    return Array.isArray(data)?data:[];
+  }catch(e){return [];}
+}
+
+function setAssignmentHistory(history){
+  localStorage.setItem(PROGRESS_HISTORY_KEY, JSON.stringify(history.slice(-50)));
+}
+
+function getCurrentAssignmentInfo(){
+  const firstAnswer=detailedAnswers.find(a=>a);
+  const domainName=(firstAnswer && BANKS.standard[firstAnswer.category]) ? BANKS.standard[firstAnswer.category].title : currentTestMode;
+  const levelMatch=currentTestMode.match(/Level\s+(\d)/);
+  const levelName=levelMatch ? `Level ${levelMatch[1]}` : (currentTestMode.includes('Mock') ? currentTestMode : (firstAnswer?.level || currentTestMode || 'Practice'));
+  return {domainName, levelName};
+}
+
+function saveAssignmentProgress(correct,total,pct){
+  const {domainName,levelName}=getCurrentAssignmentInfo();
+  const missed=detailedAnswers.filter(a=>a && !a.correct);
+  const history=getAssignmentHistory();
+  history.push({
+    id:Date.now(),
+    student:studentName||'Student',
+    assignment:currentTestMode||'Practice',
+    domain:domainName,
+    level:levelName,
+    score:`${correct}/${total}`,
+    correct,
+    total,
+    pct,
+    missedCount:missed.length,
+    missedSkills:[...new Set(missed.map(m=>m.skill).filter(Boolean))],
+    completedAt:new Date().toLocaleString()
+  });
+  setAssignmentHistory(history);
+}
+
+function clearAssignmentProgress(){
+  if(!confirm('Clear the progress shown on this device?'))return;
+  localStorage.removeItem(PROGRESS_HISTORY_KEY);
+  renderSessionProgress('homeSessionProgress');
+  renderSessionProgress('sessionProgressResults');
+}
+
+function renderSessionProgress(targetId){
+  const box=document.getElementById(targetId);
+  if(!box)return;
+  const history=getAssignmentHistory();
+  const totalCompleted=history.length;
+  if(!totalCompleted){
+    box.innerHTML=`<h3>📌 Progress on this device</h3><div class="empty-progress">No assignments completed yet on this browser. Completed assignments will appear here until you clear progress or change devices.</div>`;
+    return;
+  }
+  const avg=Math.round(history.reduce((sum,item)=>sum+(Number(item.pct)||0),0)/totalCompleted);
+  const latest=history.slice().reverse().slice(0,8);
+  const rows=latest.map((item,idx)=>{
+    const missedText=item.missedCount?` · Missed: ${item.missedCount}${item.missedSkills?.length?` (${escapeHTML(item.missedSkills.slice(0,2).join(', '))}${item.missedSkills.length>2?'...':''})`:''}`:' · No missed questions';
+    return `<div class="progress-item">
+      <div>
+        <div class="progress-main">${escapeHTML(item.domain)} — ${escapeHTML(item.level)}</div>
+        <div class="progress-sub">${escapeHTML(item.student)} · ${escapeHTML(item.completedAt)}${missedText}</div>
+      </div>
+      <div class="progress-score">${escapeHTML(item.score)} · ${Number(item.pct)||0}%</div>
+    </div>`;
+  }).join('');
+  box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+      <h3>📌 Progress on this device</h3>
+      <button class="clear-progress" onclick="clearAssignmentProgress()">Clear Progress</button>
+    </div>
+    <div class="empty-progress"><b>${totalCompleted}</b> assignment${totalCompleted===1?'':'s'} completed · Average: <b>${avg}%</b></div>
+    <div class="progress-list">${rows}</div>`;
 }
 
 // ============================================================
