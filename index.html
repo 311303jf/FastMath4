@@ -945,7 +945,7 @@ function renderQuestion(){
   document.getElementById('hint').textContent=q.hint?'💡 '+q.hint:'';
   document.getElementById('counter').textContent=`Question ${currentIndex+1} of ${currentQuiz.length}`;
   document.getElementById('progfill').style.width=`${(currentIndex/currentQuiz.length)*100}%`;
-  document.getElementById('quizBenchmarkTop').textContent=q.std;
+  const benchTop=document.getElementById('quizBenchmarkTop'); if(benchTop) benchTop.textContent=q.std;
   document.getElementById('objectiveBox').textContent=q.hint||'Solve each question carefully, step by step.';
   document.getElementById('progressText').textContent=`${currentIndex} of ${currentQuiz.length} answered`;
   document.getElementById('categoryBox').textContent=BANKS.standard[q.category]?.title||'Math';
