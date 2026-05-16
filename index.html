@@ -198,7 +198,9 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
   <div class="big" id="bigscore">0%</div>
   <p class="sub" id="rsub" style="font-size:1rem;margin:8px 0;"></p>
   <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;margin:14px 0;font-size:1rem;" id="message"></div>
+  <div id="guardianNotice" style="background:#eef6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:16px;padding:14px 18px;margin:14px 0;font-weight:800;display:none;">📨 Result is being sent to your tutor/guardian.</div>
   <div class="breakdown" id="breakdown"></div>
+  <div class="breakdown" id="missedReview"></div>
   <button class="next" onclick="goHome()" style="margin-top:20px;">🏠 Back to Home</button>
 </div>
 </div>
@@ -228,9 +230,9 @@ function sendParentNotification(student,domain,level,score,total,pct){
   try{
     if(!window.emailjs || typeof emailjs.send !== "function"){
       console.log("EmailJS not loaded yet");
-      return;
+      return Promise.reject(new Error("EmailJS not loaded yet"));
     }
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       student_name: student || "Student",
       domain_name: domain || "FASTMath4 Practice",
       level_name: level || "Practice",
@@ -238,10 +240,11 @@ function sendParentNotification(student,domain,level,score,total,pct){
       percentage: `${pct}%`,
       time_completed: new Date().toLocaleString()
     })
-    .then(()=>console.log("Parent notification sent"))
-    .catch(err=>console.log("Parent notification error", err));
+    .then(()=>{console.log("Parent notification sent"); return true;})
+    .catch(err=>{console.log("Parent notification error", err); throw err;});
   }catch(err){
     console.log("Parent notification failed", err);
+    return Promise.reject(err);
   }
 }
 
@@ -1058,7 +1061,19 @@ function selectAnswer(choiceIndex){
   const q=currentQuiz[currentIndex];
   const correct=choiceIndex===q.answer;
   answers[currentIndex]=correct;
-  detailedAnswers[currentIndex]={correct,benchmark:q.std,category:q.category,skill:q.skill,id:q.id,level:q.level};
+  detailedAnswers[currentIndex]={
+    correct,
+    benchmark:q.std,
+    category:q.category,
+    skill:q.skill,
+    id:q.id,
+    level:q.level,
+    questionText:q.text,
+    chosenAnswer:q.choices[choiceIndex],
+    correctAnswer:q.choices[q.answer],
+    explanation:q.explain,
+    hint:q.hint
+  };
   const buttons=document.querySelectorAll('.choice');
   buttons.forEach((btn,i)=>{
     btn.disabled=true;
@@ -1104,6 +1119,10 @@ function showResults(){
   document.getElementById('emoji').textContent=emoji;
   document.getElementById('rtitle').textContent=title;
   document.getElementById('message').textContent=message;
+  const guardianNotice=document.getElementById('guardianNotice');
+  if(guardianNotice){guardianNotice.style.display='block';guardianNotice.textContent='📨 Result is being sent to your tutor/guardian.';}
+  const missedBox=document.getElementById('missedReview');
+  if(missedBox){missedBox.innerHTML='';}
   // Save progress
   const progress=JSON.parse(localStorage.getItem('fastMath4Progress')||'{}');
   const isMock=currentTestMode.includes('Mock');
@@ -1117,6 +1136,7 @@ function showResults(){
     }
   }
   renderBreakdown(correct,total);
+  renderMissedReview();
 
   if(!notificationSent){
     notificationSent=true;
@@ -1124,7 +1144,15 @@ function showResults(){
     const domainName=(firstAnswer && BANKS.standard[firstAnswer.category]) ? BANKS.standard[firstAnswer.category].title : currentTestMode;
     const levelMatch=currentTestMode.match(/Level (\d)/);
     const levelName=levelMatch ? `Level ${levelMatch[1]}` : (currentTestMode.includes('Mock') ? currentTestMode : (firstAnswer?.level || 'Practice'));
-    sendParentNotification(studentName, domainName, levelName, correct, total, pct);
+    sendParentNotification(studentName, domainName, levelName, correct, total, pct)
+      .then(()=>{
+        const n=document.getElementById('guardianNotice');
+        if(n){n.style.display='block';n.textContent='✅ Result sent to your tutor/guardian.';}
+      })
+      .catch(()=>{
+        const n=document.getElementById('guardianNotice');
+        if(n){n.style.display='block';n.textContent='⚠️ Result completed. Tutor/guardian notification could not be confirmed. Please try again later.';}
+      });
   }
 }
 
@@ -1141,6 +1169,112 @@ function renderBreakdown(correct,total){
   if(weak.length){html+=`<div class="break-row" style="border-color:#f97316;background:#fff7ed;"><b>📚 Focus on:</b><br>${weak.join('<br>')}</div>`;}
   else{html+=`<div class="break-row" style="border-color:#16a34a;background:#f0fdf4;"><b>🏆 ${correct===total?'PERFECT SCORE!':'Great across all categories!'}</b><br>${correct===total?'You got every single question right! You are a math champion!':'Try a higher level or mock exam to keep growing!'}</div>`;}
   document.getElementById('breakdown').innerHTML=html;
+}
+
+
+function escapeHTML(value){
+  return String(value ?? '').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+function getMissedAnswers(){
+  return detailedAnswers.filter(a=>a && !a.correct);
+}
+
+function findPracticeIndexFromLevel(levelText){
+  const m=String(levelText||'').match(/Level\s+(\d)/);
+  if(!m)return 0;
+  return Math.max(0, Math.min(4, parseInt(m[1],10)-1));
+}
+
+function generateNewQuestionForMissedConcept(missed, usedIds){
+  const category=Number.isInteger(missed.category)?missed.category:0;
+  const preferredLevel=findPracticeIndexFromLevel(missed.level);
+  const domain=BANKS.standard[category];
+  if(!domain)return null;
+
+  const all=[];
+  domain.practices.forEach((practice,levelIdx)=>{
+    practice.forEach(q=>{
+      if(q && q.skill===missed.skill && q.id!==missed.id && !usedIds.has(q.id)){
+        all.push({...q, retrySourceLevel:levelIdx});
+      }
+    });
+  });
+
+  const sameLevel=all.filter(q=>q.retrySourceLevel===preferredLevel);
+  const pool=sameLevel.length?sameLevel:all;
+  if(pool.length){
+    const chosen=pool[Math.floor(Math.random()*pool.length)];
+    usedIds.add(chosen.id);
+    return randomizeQ(chosen);
+  }
+
+  const fallbackPool=(domain.practices[preferredLevel]||[]).filter(q=>q && q.id!==missed.id && !usedIds.has(q.id));
+  if(fallbackPool.length){
+    const chosen=fallbackPool[Math.floor(Math.random()*fallbackPool.length)];
+    usedIds.add(chosen.id);
+    return randomizeQ(chosen);
+  }
+  return null;
+}
+
+function renderMissedReview(){
+  const box=document.getElementById('missedReview');
+  if(!box)return;
+  const missed=getMissedAnswers();
+  if(!missed.length){
+    box.innerHTML=`<div class="break-row" style="border-color:#16a34a;background:#f0fdf4;"><b>✅ No missed questions</b><br>Great work! There are no missed concepts to retry.</div>`;
+    return;
+  }
+
+  const rows=missed.map((m,idx)=>{
+    const domain=BANKS.standard[m.category]?.title||'Math';
+    return `<div class="break-row" style="background:#fff7ed;border-color:#fed7aa;">
+      <b>Missed Question ${idx+1}</b><br>
+      <span style="color:var(--muted);font-size:.85rem;"><b>Domain:</b> ${escapeHTML(domain)} · <b>Concept:</b> ${escapeHTML(m.skill)} · <b>Standard:</b> ${escapeHTML(m.benchmark)}</span>
+      <div style="margin-top:10px;"><b>Question:</b><br>${escapeHTML(m.questionText)}</div>
+      <div style="margin-top:8px;color:#991b1b;"><b>Your answer:</b> ${escapeHTML(m.chosenAnswer)}</div>
+      <div style="margin-top:4px;color:#166534;"><b>Correct answer:</b> ${escapeHTML(m.correctAnswer)}</div>
+      <div style="margin-top:8px;"><b>Explanation:</b><br>${escapeHTML(m.explanation)}</div>
+      <div style="margin-top:8px;color:#0f766e;"><b>Next step:</b> Try a new question from the same concept.</div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML=`<h3 style="font-size:1rem;margin:18px 0 12px;">🔁 Missed Questions Review</h3>${rows}
+    <button class="next" onclick="retryMissedConcepts()" style="margin-top:14px;background:#0f766e;">Practice Missed Concepts Again →</button>`;
+}
+
+function retryMissedConcepts(){
+  const missed=getMissedAnswers();
+  if(!missed.length)return;
+  const usedIds=new Set(currentQuiz.map(q=>q.id));
+  const retryQuestions=[];
+  const seenConcepts=new Set();
+
+  missed.forEach(m=>{
+    const conceptKey=`${m.category}-${m.skill}`;
+    if(seenConcepts.has(conceptKey))return;
+    seenConcepts.add(conceptKey);
+    const q=generateNewQuestionForMissedConcept(m,usedIds);
+    if(q)retryQuestions.push(q);
+  });
+
+  if(!retryQuestions.length){
+    alert('No new retry questions are available for those concepts right now. Try the same level again from the menu.');
+    return;
+  }
+
+  currentQuiz=retryQuestions;
+  currentIndex=0;
+  answers=[];
+  detailedAnswers=[];
+  notificationSent=false;
+  currentTestMode='Retry Missed Concepts';
+  document.getElementById('qtitle').textContent='Retry Missed Concepts';
+  const benchTop=document.getElementById('quizBenchmarkTop'); if(benchTop) benchTop.textContent='New questions from missed concepts';
+  showScreen('quiz');
+  startTimer(Math.max(5, retryQuestions.length*3));
+  renderQuestion();
 }
 
 // ============================================================
