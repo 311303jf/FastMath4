@@ -742,19 +742,66 @@ function sanitizeQuestion(q, fallbackCategory=0, fallbackLevel=0, fallbackIndex=
   return q;
 }
 
-function sanitizeQuizQuestions(list){
+function makeFallbackUniqueQuestion(category=0, levelIndex=0, salt=0){
+  const level=LEVELS[levelIndex] || 'Practice';
+  const cat=Number.isInteger(category)?category:0;
+  const n=salt+1;
+  if(cat===0){
+    const a=12 + ((n*7)%38);
+    const b=2 + ((n*5)%8);
+    const ans=a*b;
+    return sanitizeQuestion({id:`UNIQUE-NSO-${levelIndex}-${salt}`,text:`A classroom has ${a} folders in each box. There are ${b} boxes. How many folders are there in all?`,choices:[ans,ans+b,Math.max(0,ans-b),a+b].map(String),answer:0,explain:`Multiply the number of folders per box by the number of boxes: ${a} × ${b} = ${ans}.`,std:'MA.4.NSO.2.2',level,hint:'Use groups × items in each group.',skill:'Unique multiplication word problem',category:cat},cat,levelIndex,salt);
+  }
+  if(cat===1){
+    const d=[4,5,6,8,10][n%5];
+    const x=1+(n%(d-2));
+    const y=1+((n*2)%(d-x-1 || 1));
+    const ans=x+y;
+    return sanitizeQuestion({id:`UNIQUE-FR-${levelIndex}-${salt}`,text:`Lena colored ${x}/${d} of a poster blue and ${y}/${d} green. What fraction of the poster did she color?`,choices:[`${ans}/${d}`,`${Math.max(1,ans-1)}/${d}`,`${ans}/${d*2}`,`${Math.min(d,ans+1)}/${d}`],answer:0,explain:`The denominators are the same, so add the numerators: ${x} + ${y} = ${ans}. The answer is ${ans}/${d}.`,std:'MA.4.FR.2.2',level,hint:'For like denominators, add the numerators and keep the denominator.',skill:'Unique fraction addition',category:cat},cat,levelIndex,salt);
+  }
+  if(cat===2){
+    const l=5+((n*3)%15);
+    const w=3+((n*4)%9);
+    const area=l*w;
+    return sanitizeQuestion({id:`UNIQUE-GR-${levelIndex}-${salt}`,text:`A rectangular garden is ${l} feet long and ${w} feet wide. What is its area?`,choices:[area,2*l+2*w,area+l,Math.max(1,area-w)].map(String),answer:0,explain:`Area = length × width = ${l} × ${w} = ${area} square feet.`,std:'MA.4.GR.2.2',level,hint:'Area means square units. Multiply length by width.',skill:'Unique area problem',category:cat},cat,levelIndex,salt);
+  }
+  const vals=[3+(n%5),5+((n*2)%6),7+((n*3)%7),5+((n*2)%6),9+((n*4)%8)];
+  const mode=vals[1];
+  const range=Math.max(...vals)-Math.min(...vals);
+  return sanitizeQuestion({id:`UNIQUE-DP-${levelIndex}-${salt}`,text:`Find the mode of this data set: ${vals.join(', ')}.`,choices:[mode,range,Math.min(...vals),Math.max(...vals)].map(String),answer:0,explain:`The mode is the value that appears most often. In this set, ${mode} appears more than the other values.`,std:'MA.4.DP.1.2',level,hint:'Mode means most frequent value.',skill:'Unique data analysis',category:cat},cat,levelIndex,salt);
+}
+
+function questionKey(q){
+  return cleanTextValue(q?.text || '').toLowerCase().replace(/\s+/g,' ').trim();
+}
+
+function sanitizeQuizQuestions(list, preferredCategory=null, preferredLevel=null){
+  const targetCount=Array.isArray(list)?list.length:10;
   const used=new Set();
   const cleaned=[];
-  list.forEach((q,idx)=>{
-    const item=sanitizeQuestion(q, q?.category ?? 0, 0, idx);
-    let key=item.text.toLowerCase();
-    if(used.has(key)){
-      item.text=item.text + ` (Version ${idx+1})`;
-      key=item.text.toLowerCase();
-    }
+
+  function tryAdd(q, idx){
+    const cat=preferredCategory!==null ? preferredCategory : (q?.category ?? 0);
+    const lvl=preferredLevel!==null ? preferredLevel : 0;
+    const item=sanitizeQuestion(q, cat, lvl, idx);
+    const key=questionKey(item);
+    if(!key || used.has(key)) return false;
     used.add(key);
     cleaned.push(item);
-  });
+    return true;
+  }
+
+  (Array.isArray(list)?list:[]).forEach((q,idx)=>tryAdd(q,idx));
+
+  // If the original bank had repeated text, replace duplicates with brand-new unique questions.
+  let salt=0;
+  while(cleaned.length<targetCount && salt<200){
+    const cat=preferredCategory!==null ? preferredCategory : (cleaned[0]?.category ?? 0);
+    const lvl=preferredLevel!==null ? preferredLevel : 0;
+    tryAdd(makeFallbackUniqueQuestion(cat,lvl,1000+salt),1000+salt);
+    salt++;
+  }
+
   return cleaned;
 }
 
@@ -896,7 +943,7 @@ function randomizeQ(q){
 function startQuiz(domainIndex,practiceIndex){
   if(!saveName())return;
   const domain=BANKS.standard[domainIndex];
-  currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex]).map(randomizeQ);
+  currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex], domainIndex, practiceIndex).map(randomizeQ);
   currentIndex=0;answers=[];detailedAnswers=[];
   currentTestMode=`${domain.title} — ${LEVELS[practiceIndex]}`;
   setText('qtitle', domain.title);
@@ -911,7 +958,7 @@ function startMock(mockIndex){
   const perCat=[11,10,10,9];
   currentQuiz=[];
   perCat.forEach((count,cat)=>{for(let i=0;i<count;i++){currentQuiz.push(buildMockQuestion(mockIndex,cat,i));}});
-  currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz)).map(randomizeQ);
+  currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz), null, null).map(randomizeQ);
   currentIndex=0;answers=[];detailedAnswers=[];
   currentTestMode=MOCKS[mockIndex].title;
   setText('qtitle', MOCKS[mockIndex].title);
