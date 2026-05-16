@@ -802,6 +802,21 @@ function buildMockQuestion(mockIndex,category,i){
 let currentQuiz=[],currentIndex=0,answers=[],detailedAnswers=[],studentName='',currentTestMode='';
 let timerInterval=null,secondsLeft=0;
 
+
+function setText(id,value){
+  const el=document.getElementById(id);
+  if(el) el.textContent=value;
+}
+function setHTML(id,value){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=value;
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
 // ============================================================
 // STUDENT INFO
 // ============================================================
@@ -884,10 +899,9 @@ function startQuiz(domainIndex,practiceIndex){
   currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex]).map(randomizeQ);
   currentIndex=0;answers=[];detailedAnswers=[];
   currentTestMode=`${domain.title} — ${LEVELS[practiceIndex]}`;
-  document.getElementById('qtitle').textContent=domain.title;
-  document.getElementById('quizBenchmarkTop').textContent=LEVELS[practiceIndex];
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('quiz').classList.add('active');
+  setText('qtitle', domain.title);
+  setText('quizBenchmarkTop', LEVELS[practiceIndex]);
+  showScreen('quiz');
   startTimer(practiceIndex===4?25:20); // Level 5 gets more time
   renderQuestion();
 }
@@ -900,10 +914,9 @@ function startMock(mockIndex){
   currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz)).map(randomizeQ);
   currentIndex=0;answers=[];detailedAnswers=[];
   currentTestMode=MOCKS[mockIndex].title;
-  document.getElementById('qtitle').textContent=MOCKS[mockIndex].title;
-  document.getElementById('quizBenchmarkTop').textContent='Full Mock Exam';
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('quiz').classList.add('active');
+  setText('qtitle', MOCKS[mockIndex].title);
+  setText('quizBenchmarkTop', 'Full Mock Exam');
+  showScreen('quiz');
   startTimer(45);
   renderQuestion();
 }
