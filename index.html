@@ -207,6 +207,45 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
 
 <script>
 // ============================================================
+// EMAIL NOTIFICATIONS
+// ============================================================
+const EMAILJS_SERVICE_ID = "service_83ij5js";
+const EMAILJS_TEMPLATE_ID = "template_amf7dyy";
+const EMAILJS_PUBLIC_KEY = "JbjTUYtq7BcPCXqer";
+
+function initEmailNotifications(){
+  try{
+    if(window.emailjs && typeof emailjs.init === "function"){
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+      console.log("EmailJS ready");
+    }
+  }catch(err){
+    console.log("EmailJS init error", err);
+  }
+}
+
+function sendParentNotification(student,domain,level,score,total,pct){
+  try{
+    if(!window.emailjs || typeof emailjs.send !== "function"){
+      console.log("EmailJS not loaded yet");
+      return;
+    }
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      student_name: student || "Student",
+      domain_name: domain || "FASTMath4 Practice",
+      level_name: level || "Practice",
+      score: `${score}/${total}`,
+      percentage: `${pct}%`,
+      time_completed: new Date().toLocaleString()
+    })
+    .then(()=>console.log("Parent notification sent"))
+    .catch(err=>console.log("Parent notification error", err));
+  }catch(err){
+    console.log("Parent notification failed", err);
+  }
+}
+
+// ============================================================
 // DOMAINS — 4th Grade B.E.S.T. Math
 // ============================================================
 const BANKS={standard:[
@@ -1079,19 +1118,14 @@ function showResults(){
   }
   renderBreakdown(correct,total);
 
-  const firstAnswer=detailedAnswers.find(a=>a);
-  const domainName=(firstAnswer && BANKS.standard[firstAnswer.category]) ? BANKS.standard[firstAnswer.category].title : currentTestMode;
-  const levelMatch=currentTestMode.match(/Level (\d)/);
-  const levelName=levelMatch ? `Level ${levelMatch[1]}` : (currentTestMode.includes('Mock') ? 'Mock Exam' : (firstAnswer?.level || 'Practice'));
-
-  sendParentNotification(
-    studentName,
-    domainName,
-    levelName,
-    correct,
-    total,
-    pct
-  );
+  if(!notificationSent){
+    notificationSent=true;
+    const firstAnswer=detailedAnswers.find(a=>a);
+    const domainName=(firstAnswer && BANKS.standard[firstAnswer.category]) ? BANKS.standard[firstAnswer.category].title : currentTestMode;
+    const levelMatch=currentTestMode.match(/Level (\d)/);
+    const levelName=levelMatch ? `Level ${levelMatch[1]}` : (currentTestMode.includes('Mock') ? currentTestMode : (firstAnswer?.level || 'Practice'));
+    sendParentNotification(studentName, domainName, levelName, correct, total, pct);
+  }
 }
 
 function renderBreakdown(correct,total){
