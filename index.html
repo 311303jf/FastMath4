@@ -803,7 +803,7 @@ function sanitizeQuestion(q, fallbackCategory=0, fallbackLevel=0, fallbackIndex=
   q.category=Number.isInteger(q.category)?q.category:fallbackCategory;
   q.level=q.level || LEVELS[fallbackLevel] || 'Practice';
 
-  const rawChoices=Array.isArray(q.choices)?q.choices.map(normalizeChoice):['A','B','C','D'];
+  let rawChoices=Array.isArray(q.choices)?q.choices.map(normalizeChoice):['A','B','C','D'];
   let answerIndex=Number.isInteger(q.answer)?q.answer:0;
   if(answerIndex<0 || answerIndex>=rawChoices.length) answerIndex=0;
 
@@ -923,10 +923,12 @@ function makeFallbackUniqueQuestion(category=0, levelIndex=0, salt=0){
     const area=l*w;
     return sanitizeQuestion({id:`UNIQUE-GR-${levelIndex}-${salt}`,text:`A rectangular garden is ${l} feet long and ${w} feet wide. What is its area?`,choices:[area,2*l+2*w,area+l,Math.max(1,area-w)].map(String),answer:0,explain:`Area = length × width = ${l} × ${w} = ${area} square feet.`,std:'MA.4.GR.2.2',level,hint:'Area means square units. Multiply length by width.',skill:'Unique area problem',category:cat},cat,levelIndex,salt);
   }
-  const vals=[3+(n%5),5+((n*2)%6),7+((n*3)%7),5+((n*2)%6),9+((n*4)%8)];
-  const mode=vals[1];
-  const range=Math.max(...vals)-Math.min(...vals);
-  return sanitizeQuestion({id:`UNIQUE-DP-${levelIndex}-${salt}`,text:`Find the mode of this data set: ${vals.join(', ')}.`,choices:[mode,range,Math.min(...vals),Math.max(...vals)].map(String),answer:0,explain:`The mode is the value that appears most often. In this set, ${mode} appears more than the other values.`,std:'MA.4.DP.1.2',level,hint:'Mode means most frequent value.',skill:'Unique data analysis',category:cat},cat,levelIndex,salt);
+  const mode=6 + (n%8);
+  const other1=mode+3;
+  const other2=mode+5;
+  const other3=Math.max(1,mode-2);
+  const vals=[other1,mode,other2,mode,other3];
+  return sanitizeQuestion({id:`UNIQUE-DP-${levelIndex}-${salt}`,text:`Find the mode of this data set: ${vals.join(', ')}.`,choices:[String(mode),String(other1),String(other2),String(other3)],answer:0,explain:`The mode is the value that appears most often. In this set, ${mode} appears twice. The other values appear once.`,std:'MA.4.DP.1.2',level,hint:'Mode means most frequent value.',skill:'Unique data analysis',category:cat},cat,levelIndex,salt);
 }
 
 function questionKey(q){
@@ -1155,7 +1157,10 @@ function updateTimerDisplay(){
 }
 
 function renderQuestion(){
-  const q=currentQuiz[currentIndex];if(!q)return showResults();
+  let q=currentQuiz[currentIndex];if(!q)return showResults();
+  const levelIndexForQC=Math.max(0,LEVELS.findIndex(l=>l===q.level));
+  q=sanitizeQuestion(q, q.category??0, levelIndexForQC, currentIndex);
+  currentQuiz[currentIndex]=q;
   document.getElementById('qtext').textContent=q.text;
   document.getElementById('meta').textContent=`${q.std} · ${q.level} · ${q.skill}`;
   const hintEl=document.getElementById('hint');
