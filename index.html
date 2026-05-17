@@ -539,25 +539,25 @@ function buildFR(p,i){
   }
 
   if(diff===5){
+    // Grade 4 Level 5: deeper reasoning inside Grade 4 standards.
+    // No dividing by fractions, no middle-school algebra, no above-grade content.
     const hard=[
-      {text:'A student reads 2/5 of a 200-page book on Monday and 1/4 of the book on Tuesday. How many pages are left?',ans:70,choices:[80,70,130,110],explain:'Monday: 2/5 × 200 = 80 pages. Tuesday: 1/4 × 200 = 50 pages. Read total: 130. Left: 200 - 130 = 70 pages.',std:'MA.4.FR.2.2',skill:'Multi-step fraction word problem'},
-      {text:'Which set of fractions is in order from least to greatest: 3/4, 2/3, 5/8?',ans:'5/8, 2/3, 3/4',choices:['3/4, 2/3, 5/8','5/8, 2/3, 3/4','2/3, 5/8, 3/4','3/4, 5/8, 2/3'],explain:'Convert to 24ths: 5/8=15/24, 2/3=16/24, 3/4=18/24. Order: 5/8 < 2/3 < 3/4.',std:'MA.4.FR.1.4',skill:'Ordering unlike fractions'},
-      {text:'A pattern follows the rule: multiply by 3, then subtract 1. If the pattern starts with 2, what is the 4th term? 2, 5, 14, ___',ans:41,choices:[40,41,42,53],explain:'Apply the rule: 2 × 3 - 1 = 5, then 5 × 3 - 1 = 14, then 14 × 3 - 1 = 41. The 4th term is 41.',std:'MA.4.AR.2.1',skill:'Complex patterns'},
-      {text:'Mia earns $0.25 for each correct answer on a test with 24 questions. She also gets a $2.00 bonus for finishing early. If she gets 20 correct, how much does she earn in all?',ans:7.0,choices:[5.00,7.00,7.25,7.50],explain:'Correct answers: 20 × $0.25 = $5.00. Add bonus: $5.00 + $2.00 = $7.00.',std:'MA.4.AR.1.3',skill:'Decimal money problem'},
-      {text:'A jug holds 3 1/2 liters. If 1 3/4 liters are poured out, how much remains?',ans:'1 3/4',choices:['1 1/4','1 3/4','2 1/4','2 3/4'],explain:'3 1/2 - 1 3/4: Convert to same denominator. 3 2/4 - 1 3/4 = 2 6/4 - 1 3/4 = 1 3/4 liters.',std:'MA.4.FR.2.3',skill:'Subtracting mixed numbers'},
-      {text:'In a class of 32 students, 3/8 play soccer and 1/4 play basketball. How many students play either sport?',ans:20,choices:[18,20,22,12],explain:'Soccer: 3/8 × 32 = 12. Basketball: 1/4 × 32 = 8. Total: 12 + 8 = 20 students.',std:'MA.4.FR.2.2',skill:'Fraction of a set — multi-step'},
-      {text:'What value of n makes both equations true? n × 4 = 28 and n + 15 = ?',ans:22,choices:[7,22,28,15],explain:'From n × 4 = 28: n = 7. Then n + 15 = 7 + 15 = 22.',std:'MA.4.AR.2.2',skill:'Connected equations'},
-      {text:'A decimal number has 4 in the tenths place and 7 in the hundredths place. The whole number part is 3. Write the number and compare it to 3.5.',ans:'3.47 < 3.5',choices:['3.47 > 3.5','3.47 < 3.5','3.47 = 3.5','3.74 < 3.5'],explain:'The number is 3.47. Comparing: 3.47 vs 3.50. Tenths: 4 < 5, so 3.47 < 3.50 = 3.5.',std:'MA.4.FR.1.2',skill:'Place value and decimal comparison'},
-      {text:'A baker has 24 cupcakes. He gives away 2/3 of them. How many cupcakes does he give away?',ans:16,choices:[8,12,16,18],explain:'Find 2/3 of 24. First, 24 ÷ 3 = 8. Then 8 × 2 = 16 cupcakes.',std:'MA.4.FR.2.2',skill:'Fraction of a set'},
-      {text:'An input-output table has these pairs: (3,10), (5,16), (7,22). What is the output when input is 12?',ans:37,choices:[34,36,37,40],explain:'Rule: output = input × 3 + 1. Check: 3×3+1=10 ✓, 5×3+1=16 ✓, 7×3+1=22 ✓. For 12: 12×3+1=37.',std:'MA.4.AR.2.1',skill:'Finding and applying a rule'}
+      {text:'A student reads 2/5 of a 200-page book on Monday and 1/4 of the book on Tuesday. How many pages are left?',ans:70,choices:[60,70,80,130],explain:'Monday: 2/5 of 200 = 80 pages. Tuesday: 1/4 of 200 = 50 pages. Total read = 130. Pages left = 200 - 130 = 70.',std:'MA.4.FR.2.2',skill:'Multi-step fraction of a whole'},
+      {text:'Which set of fractions is in order from least to greatest: 3/4, 2/3, 5/8?',ans:'5/8, 2/3, 3/4',choices:['3/4, 2/3, 5/8','5/8, 2/3, 3/4','2/3, 5/8, 3/4','3/4, 5/8, 2/3'],explain:'Use a common denominator of 24: 5/8=15/24, 2/3=16/24, 3/4=18/24. Least to greatest: 5/8, 2/3, 3/4.',std:'MA.4.FR.1.4',skill:'Ordering unlike fractions'},
+      {text:'A pattern follows the rule: multiply by 2, then add 3. If the first number is 4, what is the next number?',ans:11,choices:[8,10,11,14],explain:'Apply the rule to 4: 4 × 2 = 8, and 8 + 3 = 11.',std:'MA.4.AR.2.1',skill:'Number patterns'},
+      {text:'Mia earns $0.25 for each correct answer. She gets 20 correct answers and a $2.00 bonus. How much does she earn in all?',ans:'$7.00',choices:['$5.00','$7.00','$7.25','$7.50'],explain:'20 × $0.25 = $5.00. Add the $2.00 bonus: $5.00 + $2.00 = $7.00.',std:'MA.4.FR.1.2',skill:'Decimal money problem'},
+      {text:'A jug holds 3 1/2 liters. If 1 1/2 liters are poured out, how much remains?',ans:'2',choices:['1','1 1/2','2','2 1/2'],explain:'3 1/2 - 1 1/2 = 2 liters because the fraction parts are the same and subtract to 0.',std:'MA.4.FR.2.3',skill:'Subtracting mixed numbers with like denominators'},
+      {text:'In a class of 32 students, 3/8 play soccer and 1/4 play basketball. How many students play either sport?',ans:20,choices:[12,18,20,24],explain:'Soccer: 3/8 of 32 = 12. Basketball: 1/4 of 32 = 8. Total: 12 + 8 = 20 students.',std:'MA.4.FR.2.2',skill:'Fraction of a set — multi-step'},
+      {text:'A rule says: multiply the input by 4. If the output is 28, what was the input?',ans:7,choices:[6,7,8,24],explain:'Find the missing input by using the inverse operation: 28 ÷ 4 = 7.',std:'MA.4.AR.2.2',skill:'Input-output equations'},
+      {text:'A decimal number has 4 in the tenths place and 7 in the hundredths place. The whole number part is 3. Which comparison is true?',ans:'3.47 < 3.5',choices:['3.47 > 3.5','3.47 < 3.5','3.47 = 3.5','3.74 < 3.5'],explain:'The number is 3.47. Compare it to 3.50. Since 4 tenths is less than 5 tenths, 3.47 < 3.5.',std:'MA.4.FR.1.2',skill:'Place value and decimal comparison'},
+      {text:'A baker uses 2/3 cup of sugar for one batch. How much sugar is needed for 3 batches?',ans:'2 cups',choices:['1 cup','1 1/3 cups','2 cups','3 cups'],explain:'Each batch uses 2/3 cup. For 3 batches: 2/3 + 2/3 + 2/3 = 6/3 = 2 cups.',std:'MA.4.FR.2.2',skill:'Adding fractions in a context'},
+      {text:'An input-output table has these pairs: (3,10), (5,16), (7,22). What is the output when input is 9?',ans:28,choices:[24,27,28,30],explain:'The rule is multiply by 3 and add 1. For input 9: 9 × 3 + 1 = 28.',std:'MA.4.AR.2.1',skill:'Finding and applying a rule'}
     ];
     const q=hard[i%10];
-    const ansIdx=Array.isArray(q.choices)&&typeof q.choices[0]==='number'?q.choices.indexOf(q.ans):q.choices.indexOf(String(q.ans));
-    return {id,text:q.text,choices:q.choices.map(String),answer:Math.max(0,ansIdx),explain:q.explain,std:q.std,level:LEVELS[4],hint:'Take this step by step. What information do you have? What are you looking for?',skill:q.skill,category:1};
+    const ansIdx=q.choices.map(String).indexOf(String(q.ans));
+    return {id,text:q.text,choices:q.choices.map(String),answer:Math.max(0,ansIdx),explain:q.explain,std:q.std,level:LEVELS[4],hint:'Stay inside the Grade 4 skill. Break the problem into one or two clear steps.',skill:q.skill,category:1};
   }
-}
-
-// ============================================================
+}// ============================================================
 // QUESTION BUILDER — Category 2: Geometry & Measurement
 // ============================================================
 function buildGR(p,i){
@@ -691,67 +691,71 @@ function buildGR(p,i){
 function buildDP(p,i){
   const id=`DP-L${p+1}-Q${i+1}`;const diff=p+1;
 
+  // IMPORTANT BASELINE RULE:
+  // Grade 4 Data Analysis questions must stay inside Grade 4 skills:
+  // reading tables/graphs, totals/differences, mode, median, range, and clear frequency tables.
+  // Avoid ambiguous tally strings, mean, percent, and middle-school statistics.
+
   if(diff===1){
     const data=[
-      {q:'A bar graph shows: apples=8, oranges=5, bananas=12. Which fruit is most popular?',ans:'Bananas',choices:['Apples','Oranges','Bananas','They are equal'],explain:'Bananas have the highest bar (12), so bananas are most popular.'},
-      {q:'A tally chart shows cats: ||||, dogs: |||| |, birds: ||. How many dogs are there?',ans:'6',choices:['5','6','4','7'],explain:'|||| | = 5 + 1 = 6 dogs. Each |||| = 5.'},
-      {q:'A line plot shows test scores: 70, 75, 75, 80, 85, 90. What is the most common score?',ans:'75',choices:['70','75','80','85'],explain:'75 appears twice, making it the mode (most frequent value).'},
-      {q:'A picture graph shows: ☀️=Monday, ☀️☀️=Tuesday, ☀️☀️☀️=Wednesday. Each ☀️ = 2 sunny hours. How many sunny hours on Tuesday?',ans:'4',choices:['2','4','6','8'],explain:'Tuesday has 2 suns × 2 hours each = 4 sunny hours.'},
-      {q:'A bar graph shows books read per week: Week 1=4, Week 2=6, Week 3=5, Week 4=7. What is the total books read?',ans:'22',choices:['20','22','24','25'],explain:'4 + 6 + 5 + 7 = 22 books total.'}
+      {q:'A bar graph shows: apples=8, oranges=5, bananas=12. Which fruit is most popular?',ans:'Bananas',choices:['Apples','Oranges','Bananas','They are equal'],explain:'Bananas have the highest value, 12, so bananas are most popular.',skill:'Reading bar graphs'},
+      {q:'A tally chart shows: cats=4, dogs=5, birds=2. How many dogs are there?',ans:'5',choices:['4','5','6','7'],explain:'The chart clearly states dogs = 5, so there are 5 dogs.',skill:'Reading tally charts'},
+      {q:'A line plot shows test scores: 70, 75, 75, 80, 85, 90. What is the most common score?',ans:'75',choices:['70','75','80','85'],explain:'75 appears twice. All other scores appear once, so the most common score is 75.',skill:'Finding the mode'},
+      {q:'A picture graph shows: Monday=1 symbol, Tuesday=2 symbols, Wednesday=3 symbols. Each symbol = 2 sunny hours. How many sunny hours were there on Tuesday?',ans:'4',choices:['2','4','6','8'],explain:'Tuesday has 2 symbols. Each symbol equals 2 hours. 2 × 2 = 4 sunny hours.',skill:'Reading picture graphs'},
+      {q:'A bar graph shows books read per week: Week 1=4, Week 2=6, Week 3=5, Week 4=7. What is the total number of books read?',ans:'22',choices:['20','22','24','25'],explain:'Add all weeks: 4 + 6 + 5 + 7 = 22 books.',skill:'Finding totals from graphs'}
     ];
     const q=data[i%5];const ans=q.choices.indexOf(q.ans);
-    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.1',level:LEVELS[0],hint:'Read the graph carefully. Look at the values.',skill:'Reading graphs',category:3};
+    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.1',level:LEVELS[0],hint:'Read the graph or table carefully and identify the value asked for.',skill:q.skill,category:3};
   }
 
   if(diff===2){
     const data=[
-      {q:'Find the MODE of this data: 4, 7, 4, 9, 4, 7, 3',ans:'4',choices:['3','4','7','9'],explain:'Mode = most frequent. 4 appears 3 times, which is more than any other value.'},
-      {q:'Find the RANGE of: 15, 8, 22, 10, 18',ans:'14',choices:['10','14','22','8'],explain:'Range = highest - lowest = 22 - 8 = 14.'},
-      {q:'A frequency table shows: red=12, blue=8, green=15, yellow=5. How many more students chose green than yellow?',ans:'10',choices:['7','10','20','3'],explain:'Green - Yellow = 15 - 5 = 10 more students.'},
-      {q:'Data set: 3, 5, 7, 5, 9, 5, 1. What is the mode?',ans:'5',choices:['1','5','7','9'],explain:'5 appears 3 times — more than any other value. Mode = 5.'},
-      {q:'Heights in inches: 48, 52, 50, 48, 54, 52, 48. What is the mode?',ans:'48',choices:['48','50','52','54'],explain:'48 appears 3 times. Mode = 48.'}
+      {q:'Find the mode of this data set: 4, 7, 4, 9, 4, 7, 3.',ans:'4',choices:['3','4','7','9'],explain:'The mode is the value that appears most often. 4 appears three times, more than any other value.',skill:'Mode'},
+      {q:'Find the range of this data set: 15, 8, 22, 10, 18.',ans:'14',choices:['10','14','22','8'],explain:'Range = greatest value - least value = 22 - 8 = 14.',skill:'Range'},
+      {q:'A frequency table shows: red=12, blue=8, green=15, yellow=5. How many more students chose green than yellow?',ans:'10',choices:['7','10','20','3'],explain:'Green has 15 and yellow has 5. 15 - 5 = 10 more students.',skill:'Comparing data'},
+      {q:'Data set: 3, 5, 7, 5, 9, 5, 1. What is the mode?',ans:'5',choices:['1','5','7','9'],explain:'5 appears three times. No other value appears as often, so the mode is 5.',skill:'Mode'},
+      {q:'Heights in inches: 48, 52, 50, 48, 54, 52, 48. What is the mode?',ans:'48',choices:['48','50','52','54'],explain:'48 appears three times. 52 appears twice. The mode is 48.',skill:'Mode'}
     ];
     const q=data[i%5];const ans=q.choices.indexOf(q.ans);
-    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[1],hint:'Mode = most frequent, Range = max − min.',skill:'Mode and range',category:3};
+    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[1],hint:'Mode means most frequent. Range means greatest value minus least value.',skill:q.skill,category:3};
   }
 
   if(diff===3){
     const data=[
-      {q:'Find the MEDIAN of: 3, 7, 2, 9, 5 (hint: order them first)',ans:'5',choices:['3','5','7','9'],explain:'Ordered: 2, 3, 5, 7, 9. The middle value (median) is 5.'},
-      {q:'A class scored: 72, 85, 91, 68, 85, 74, 85. What is the mode?',ans:'85',choices:['72','74','85','91'],explain:'85 appears 3 times. Mode = 85.'},
-      {q:'Test scores: 60, 70, 80, 90, 100. What is the median?',ans:'80',choices:['70','75','80','90'],explain:'Ordered: 60, 70, 80, 90, 100. Median (middle) = 80.'},
-      {q:'Data: 12, 8, 15, 10, 8, 14, 8. Find mode and range.',ans:'Mode=8, Range=7',choices:['Mode=8, Range=10','Mode=8, Range=7','Mode=14, Range=7','Mode=10, Range=8'],explain:'Mode: 8 appears 3 times. Range: 15 - 8 = 7.'},
-      {q:'Heights: 4ft 2in, 4ft 5in, 4ft 3in, 4ft 5in, 4ft 8in. What is the mode?',ans:'4ft 5in',choices:['4ft 2in','4ft 3in','4ft 5in','4ft 8in'],explain:'4ft 5in appears twice. Mode = 4ft 5in.'}
+      {q:'Find the median of this data set: 3, 7, 2, 9, 5.',ans:'5',choices:['3','5','7','9'],explain:'Order the numbers: 2, 3, 5, 7, 9. The middle value is 5.',skill:'Median'},
+      {q:'A class scored: 72, 85, 91, 68, 85, 74, 85. What is the mode?',ans:'85',choices:['72','74','85','91'],explain:'85 appears three times, more than any other score. The mode is 85.',skill:'Mode'},
+      {q:'Test scores are 60, 70, 80, 90, 100. What is the median?',ans:'80',choices:['70','75','80','90'],explain:'The numbers are already in order. The middle value is 80.',skill:'Median'},
+      {q:'Data: 12, 8, 15, 10, 8, 14, 8. Find the mode and range.',ans:'Mode=8, Range=7',choices:['Mode=8, Range=10','Mode=8, Range=7','Mode=14, Range=7','Mode=10, Range=8'],explain:'Mode: 8 appears three times. Range: 15 - 8 = 7.',skill:'Mode and range'},
+      {q:'A table shows pencils sold: Monday=18, Tuesday=25, Wednesday=17, Thursday=25, Friday=20. What is the mode?',ans:'25',choices:['17','18','20','25'],explain:'25 appears twice. Every other value appears once, so the mode is 25.',skill:'Mode from a table'}
     ];
     const q=data[i%5];const ans=q.choices.indexOf(q.ans);
-    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[2],hint:'Median = middle value when data is ordered.',skill:'Median, mode, range',category:3};
+    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[2],hint:'For median, order the data and find the middle. For mode, find the value that appears most often.',skill:q.skill,category:3};
   }
 
   if(diff===4){
     const data=[
-      {q:'A line plot shows plant heights (in cm): 5, 5, 6, 7, 7, 7, 8, 9. What is the mean height? (Mean = sum ÷ count)',ans:'7',choices:['6','6.5','7','7.5'],explain:'Sum = 5+5+6+7+7+7+8+9 = 54. Count = 8. Mean = 54 ÷ 8 = 6.75 ≈ 7 (closest answer).'},
-      {q:'Two classes scored: Class A average = 78, Class B average = 84. Class A has 20 students, Class B has 20 students. What is the combined average?',ans:'81',choices:['78','81','84','162'],explain:'Combined average = (78 + 84) ÷ 2 = 162 ÷ 2 = 81 (when both classes have equal size).'},
-      {q:'A store tracked daily sales for 5 days: $240, $180, $260, $320, $200. What is the range of daily sales?',ans:'$140',choices:['$80','$120','$140','$200'],explain:'Range = Highest - Lowest = $320 - $180 = $140.'},
-      {q:'Scores: 64, 72, 68, 80, 76, 72, 60. What value should be added to make the mode 72? Already has two 72s.',ans:'72',choices:['64','68','72','76'],explain:'72 already appears twice. Adding another 72 makes it appear 3 times, giving 72 the highest frequency.'},
-      {q:'Reading times (minutes): 20, 25, 30, 25, 35, 40, 25. What percent of the times are 25 minutes? (Round to nearest whole number)',ans:'43%',choices:['25%','33%','43%','57%'],explain:'Three 25s out of 7 values: 3/7 ≈ 0.43 = 43%.'}
+      {q:'A line plot shows plant heights in centimeters: 5, 5, 6, 7, 7, 7, 8, 9. What is the mode?',ans:'7',choices:['5','6','7','9'],explain:'7 appears three times. 5 appears twice. The mode is 7.',skill:'Line plot mode'},
+      {q:'A table shows books read: Ana=12, Ben=18, Carla=15, Diego=18. Which students read the same number of books?',ans:'Ben and Diego',choices:['Ana and Carla','Ben and Diego','Carla and Diego','Ana and Ben'],explain:'Ben read 18 books and Diego read 18 books. They read the same number.',skill:'Comparing table values'},
+      {q:'A store tracked daily sales for 5 days: $240, $180, $260, $320, $200. What is the range of daily sales?',ans:'$140',choices:['$80','$120','$140','$200'],explain:'Range = greatest - least = $320 - $180 = $140.',skill:'Range with money'},
+      {q:'Scores: 64, 72, 68, 80, 76, 72, 60. What value should be added to make the mode 72?',ans:'72',choices:['64','68','72','76'],explain:'72 already appears twice. Adding another 72 makes it appear three times, more than any other value.',skill:'Reasoning with mode'},
+      {q:'Reading times in minutes: 20, 25, 30, 25, 35, 40, 25. What is the range?',ans:'20',choices:['15','20','25','40'],explain:'The greatest value is 40 and the least value is 20. Range = 40 - 20 = 20 minutes.',skill:'Range'}
     ];
     const q=data[i%5];const ans=q.choices.indexOf(q.ans);
-    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.3',level:LEVELS[3],hint:'Read carefully. Identify what measure is being asked for.',skill:'Interpreting data',category:3};
+    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[3],hint:'Identify whether the question asks for mode, median, range, total, or comparison.',skill:q.skill,category:3};
   }
 
   if(diff===5){
     const hard=[
-      {q:'Scores: 55, 65, 70, 75, 80, 85, 90. A new student scores 95. How does this change the median?',ans:'Median increases from 75 to 77.5',choices:['Median stays at 75','Median increases to 80','Median increases from 75 to 77.5','Median decreases'],explain:'Original median (7 values): 75. New set (8 values): 55,65,70,75,80,85,90,95. Median = (75+80)/2 = 77.5.'},
-      {q:'Team A scored: 82, 78, 90, 86, 74. Team B scored: 79, 85, 91, 77, 83. Which team has the higher mean?',ans:'Same mean (82)',choices:['Team A (82)','Team B (83)','Same mean (82)','Team A (83)'],explain:'Team A: 410÷5=82. Team B: 415÷5=83. Team B has higher mean.Wait - Team B sum=79+85+91+77+83=415, mean=83. Team A=410/5=82. Team B wins.',ans:'Team B (mean 83)',choices:['Team A (mean 82)','Team B (mean 83)','Same mean (82)','Team A (mean 83)'],explain:'Team A: 82+78+90+86+74=410 ÷ 5 = 82. Team B: 79+85+91+77+83=415 ÷ 5 = 83. Team B has higher mean.'},
-      {q:'Data: 12, 15, 18, 15, 20, 14, 15. A value of 36 is added. What happens to the mode and range?',ans:'Mode unchanged (15), Range increases',choices:['Mode changes, Range unchanged','Mode unchanged (15), Range increases','Both change','Neither changes'],explain:'15 is still the most frequent. Range was 20-12=8, now 36-12=24. Range increased.'},
-      {q:'A frequency table: Test scores 60(×1), 70(×3), 80(×4), 90(×2). What is the total number of students and what is the mode?',ans:'10 students, mode=80',choices:['8 students, mode=70','10 students, mode=80','10 students, mode=70','12 students, mode=80'],explain:'Total: 1+3+4+2=10 students. Mode=80 (appears 4 times, most frequent).'},
-      {q:'Prices at 5 stores: $2.40, $2.15, $2.60, $2.15, $2.70. A 6th store charges $3.00. What is the new range?',ans:'$0.85',choices:['$0.60','$0.85','$1.00','$0.55'],explain:'New range = $3.00 - $2.15 = $0.85.'}
+      {q:'Scores: 55, 65, 70, 75, 80, 85, 90. A new student scores 95. What is the new median?',ans:'77.5',choices:['75','77.5','80','95'],explain:'New ordered set: 55,65,70,75,80,85,90,95. With 8 values, median is the average of the 4th and 5th values: (75 + 80) ÷ 2 = 77.5.',skill:'Median with even number of values'},
+      {q:'Data set A: 12, 14, 16, 18, 20. Data set B: 10, 14, 16, 18, 22. Which set has the greater range?',ans:'Set B',choices:['Set A','Set B','They have the same range','Cannot tell'],explain:'Set A range: 20 - 12 = 8. Set B range: 22 - 10 = 12. Set B has the greater range.',skill:'Comparing ranges'},
+      {q:'Data: 12, 15, 18, 15, 20, 14, 15. A value of 36 is added. What happens to the mode and range?',ans:'Mode stays 15; range increases',choices:['Mode changes; range stays the same','Mode stays 15; range increases','Both stay the same','Both decrease'],explain:'15 is still the most frequent value. The range increases because the greatest value changes from 20 to 36.',skill:'Effect of new data'},
+      {q:'A frequency table shows test scores: 60 has 1 student, 70 has 3 students, 80 has 4 students, 90 has 2 students. What are the total number of students and the mode?',ans:'10 students, mode=80',choices:['8 students, mode=70','10 students, mode=80','10 students, mode=70','12 students, mode=80'],explain:'Total students: 1 + 3 + 4 + 2 = 10. The score 80 has the greatest frequency, so the mode is 80.',skill:'Frequency table reasoning'},
+      {q:'Prices at 5 stores are $2.40, $2.15, $2.60, $2.15, $2.70. A 6th store charges $3.00. What is the new range?',ans:'$0.85',choices:['$0.55','$0.60','$0.85','$1.00'],explain:'The new greatest value is $3.00 and the least value is $2.15. Range = $3.00 - $2.15 = $0.85.',skill:'Range with decimals'}
     ];
     const q=hard[i%5];const ans=q.choices.indexOf(q.ans);
-    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans>=0?ans:0),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[4],hint:'Work step by step. Calculate each measure carefully.',skill:'Advanced data analysis',category:3};
+    return {id,text:q.q,choices:q.choices,answer:Math.max(0,ans),explain:q.explain,std:'MA.4.DP.1.2',level:LEVELS[4],hint:'Use Grade 4 data tools: mode, median, range, totals, and comparisons.',skill:q.skill,category:3};
   }
 }
-
 
 // ============================================================
 // QUESTION QUALITY CONTROL — prevents duplicate choices, invalid answers,
@@ -828,6 +832,47 @@ function sanitizeQuestion(q, fallbackCategory=0, fallbackLevel=0, fallbackIndex=
     else if(lowerQuestion.includes('90°') || lowerQuestion.includes('90 degree') || lowerQuestion.includes('right angle')) expectedTriangleType='right';
     const fixedTriangleIndex=rawChoices.findIndex(c=>String(c).toLowerCase()===expectedTriangleType);
     if(fixedTriangleIndex>=0) answerIndex=fixedTriangleIndex;
+  }
+
+
+  // Semantic safety guard for clear tally / frequency statements.
+  // Avoids ambiguity like "|||| |" by trusting explicit text values when present.
+  const explicitDataMatches=[...q.text.matchAll(/\b([A-Za-z]+)\s*=\s*(\d+)\b/g)];
+  if(explicitDataMatches.length){
+    const askMatch=q.text.match(/how many\s+([A-Za-z]+)\s+are there/i);
+    if(askMatch){
+      const label=askMatch[1].toLowerCase();
+      const found=explicitDataMatches.find(m=>m[1].toLowerCase()===label);
+      if(found){
+        const fixedIndex=rawChoices.findIndex(c=>normalizeChoice(c)===String(found[2]));
+        if(fixedIndex>=0) answerIndex=fixedIndex;
+      }
+    }
+  }
+
+  // Semantic safety guard for basic mode questions when the data set is stated in the question.
+  if(/\bmode\b/i.test(q.text)){
+    const nums=(q.text.match(/\b\d+(?:\.\d+)?\b/g)||[]).map(Number);
+    if(nums.length>=3){
+      const counts={}; nums.forEach(v=>counts[v]=(counts[v]||0)+1);
+      let modeVal=nums[0], maxCount=0;
+      Object.keys(counts).forEach(k=>{ if(counts[k]>maxCount){maxCount=counts[k];modeVal=k;} });
+      if(maxCount>1){
+        const fixedIndex=rawChoices.findIndex(c=>normalizeChoice(c)===String(modeVal));
+        if(fixedIndex>=0) answerIndex=fixedIndex;
+      }
+    }
+  }
+
+  // Semantic safety guard for basic range questions when the data set is stated in the question.
+  if(/\brange\b/i.test(q.text)){
+    const nums=(q.text.match(/\$?\b\d+(?:\.\d+)?\b/g)||[]).map(x=>Number(String(x).replace('$',''))).filter(Number.isFinite);
+    if(nums.length>=3){
+      const rangeVal=Math.max(...nums)-Math.min(...nums);
+      const rangeChoices=[String(rangeVal), '$'+(Number.isInteger(rangeVal)?String(rangeVal):rangeVal.toFixed(2))];
+      const fixedIndex=rawChoices.findIndex(c=>rangeChoices.includes(normalizeChoice(c)));
+      if(fixedIndex>=0) answerIndex=fixedIndex;
+    }
   }
 
   const correct=normalizeChoice(rawChoices[answerIndex]);
