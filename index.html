@@ -79,10 +79,19 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
 .num-pill{width:40px;height:40px;border:1px solid var(--border);border-radius:8px;background:white;font-weight:800;cursor:default;font-size:.9rem}
 .num-pill.active{background:var(--primary);color:white;border-color:var(--primary)}
 .num-pill.answered{background:#dcfce7;border-color:#86efac}
+.num-pill.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+.num-pill.hint-used{background:#fef3c7;border-color:#f59e0b;color:#92400e}
 .quiz-card{background:white;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:18px;padding:38px 38px 28px}
 .meta{color:var(--primary);font-weight:800;margin-bottom:8px;font-size:.85rem}
 .qtext{font-size:1.35rem;font-weight:800;line-height:1.5;margin-bottom:24px;color:#0f172a}
-.hint{margin-top:-10px;margin-bottom:14px;color:#0f766e;font-weight:700;font-size:.9rem}
+.hint{display:none;margin-top:10px;margin-bottom:14px;color:#0f766e;font-weight:700;font-size:.9rem;background:#ecfdf5;border:1px solid #99f6e4;border-radius:12px;padding:12px}
+.hint.show{display:block}
+.hint-btn{background:white;border:2px solid #0f766e;color:#0f766e;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer;margin:-6px 0 16px}
+.hint-btn.used{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.progfill.danger{background:#dc2626!important}
+.progfill.warning{background:#f59e0b!important}
+.hint-review{background:#fffbeb;border:1px solid #f59e0b;border-radius:12px;padding:14px;margin:10px 0;text-align:left}
+.score-note{font-size:.85rem;color:#92400e;font-weight:800;margin-top:8px}
 .choices{display:grid;gap:12px}
 .choice{background:white;border:2px solid var(--border);border-radius:12px;padding:16px 18px;font-size:1rem;text-align:left;cursor:pointer;transition:.15s;font-weight:500}
 .choice:hover{border-color:var(--primary);box-shadow:0 6px 16px rgba(26,111,181,.1);transform:translateY(-1px)}
@@ -184,6 +193,7 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
     <div class="quiz-card">
       <div class="meta" id="meta"></div>
       <div class="qtext" id="qtext"></div>
+      <button class="hint-btn" id="hintBtn" onclick="showHintForCurrentQuestion()">💡 Need a hint?</button>
       <div class="hint" id="hint"></div>
       <div class="choices" id="choices"></div>
       <div class="fb" id="fb"><strong id="fbtitle"></strong><span id="fbtext"></span></div>
@@ -219,6 +229,7 @@ input:focus{outline:2px solid var(--primary);border-color:var(--primary)}
   <div id="guardianNotice" style="background:#eef6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:16px;padding:14px 18px;margin:14px 0;font-weight:800;display:none;">📨 Result is being sent to your tutor/guardian.</div>
   <div class="progress-panel" id="sessionProgressResults"></div>
   <div class="breakdown" id="breakdown"></div>
+  <div class="breakdown" id="hintUsageReview"></div>
   <div class="breakdown" id="missedReview"></div>
   <button class="next" onclick="goHome()" style="margin-top:20px;">🏠 Back to Home</button>
 </div>
@@ -609,9 +620,15 @@ function buildGR(p,i){
       const [start,end,time]=elapsed[i%5];
       return {id,text:`A movie starts at ${start} and ends at ${end}. How long is the movie?`,choices:['1 hour 30 minutes',time,'3 hours','2 hours'],answer:1,explain:`From ${start} to ${end}: ${time}. Count forward from start time to end time.`,std:'MA.4.M.1.2',level:LEVELS[2],hint:'Count the hours first, then the minutes.',skill:'Elapsed time',category:2};}
     if(qtype===3){
-      const classifyT=[['scalene',3,'different',false],['isosceles',2,'equal',false],['equilateral',3,'equal',true],['right',1,'right angle',false]];
-      const [type,n,desc,allEq]=classifyT[i%4];
-      return {id,text:`A triangle has ${allEq?'all three':'two'} sides that are equal. ${type==='right'?'It has a 90° angle.':''}What type of triangle is it?`,choices:['scalene','isosceles','equilateral','right'],answer:['scalene','isosceles','equilateral','right'].indexOf(type),explain:`A ${type} triangle has ${desc}. ${type==='scalene'?'All sides are different lengths.':type==='isosceles'?'Exactly two sides are the same length.':type==='equilateral'?'All three sides are equal.':'One angle is exactly 90°.'}`,std:'MA.4.GR.1.1',level:LEVELS[2],hint:'Remember: equilateral=all equal, isosceles=two equal, scalene=none equal, right=has 90°.',skill:'Triangle classification',category:2};}
+      const triangleCases=[
+        {type:'scalene', text:'A triangle has no equal sides. What type of triangle is it?', explain:'A scalene triangle has all sides with different lengths.'},
+        {type:'isosceles', text:'A triangle has exactly two sides that are equal. What type of triangle is it?', explain:'An isosceles triangle has exactly two equal sides.'},
+        {type:'equilateral', text:'A triangle has all three sides equal. What type of triangle is it?', explain:'An equilateral triangle has all three sides equal.'},
+        {type:'right', text:'A triangle has one 90° angle. What type of triangle is it?', explain:'A right triangle has one angle that measures exactly 90°.'}
+      ];
+      const tc=triangleCases[i%4];
+      const tChoices=['scalene','isosceles','equilateral','right'];
+      return {id,text:tc.text,choices:tChoices,answer:tChoices.indexOf(tc.type),explain:tc.explain,std:'MA.4.GR.1.1',level:LEVELS[2],hint:'Remember: equilateral=all equal, isosceles=two equal, scalene=none equal, right=has 90°.',skill:'Triangle classification',category:2};}
     // Composite area
     const composites=[[10,4,6,2,10*4-6*2,28],[8,5,3,2,8*5-3*2,34],[12,6,4,3,12*6-4*3,60],[9,4,2,2,9*4-2*2,32],[15,5,5,2,15*5-5*2,65]];
     const [l,w,cl,cw,area,perim2]=composites[i%5];
@@ -796,6 +813,19 @@ function sanitizeQuestion(q, fallbackCategory=0, fallbackLevel=0, fallbackIndex=
     if(fixedIndex>=0) answerIndex=fixedIndex;
   }
 
+  // Semantic safety guard for triangle classification questions.
+  // This prevents mismatches such as "two equal sides" being keyed as scalene.
+  const lowerQuestion=q.text.toLowerCase();
+  if(lowerQuestion.includes('triangle') && rawChoices.some(c=>['scalene','isosceles','equilateral','right'].includes(String(c).toLowerCase()))){
+    let expectedTriangleType='';
+    if(lowerQuestion.includes('all three') || lowerQuestion.includes('three sides equal') || lowerQuestion.includes('all sides equal')) expectedTriangleType='equilateral';
+    else if(lowerQuestion.includes('exactly two') || lowerQuestion.includes('two sides') || lowerQuestion.includes('two equal')) expectedTriangleType='isosceles';
+    else if(lowerQuestion.includes('no equal') || lowerQuestion.includes('different lengths') || lowerQuestion.includes('all sides with different')) expectedTriangleType='scalene';
+    else if(lowerQuestion.includes('90°') || lowerQuestion.includes('90 degree') || lowerQuestion.includes('right angle')) expectedTriangleType='right';
+    const fixedTriangleIndex=rawChoices.findIndex(c=>String(c).toLowerCase()===expectedTriangleType);
+    if(fixedTriangleIndex>=0) answerIndex=fixedTriangleIndex;
+  }
+
   const correct=normalizeChoice(rawChoices[answerIndex]);
 
   const finalChoices=[];
@@ -926,6 +956,7 @@ function buildMockQuestion(mockIndex,category,i){
 // APP STATE
 // ============================================================
 let currentQuiz=[],currentIndex=0,answers=[],detailedAnswers=[],studentName='',currentTestMode='';
+let hintUsageLog=[];
 let timerInterval=null,secondsLeft=0,notificationSent=false,resultSaved=false;
 
 
@@ -1033,7 +1064,7 @@ function startQuiz(domainIndex,practiceIndex){
   if(!saveName())return;
   const domain=BANKS.standard[domainIndex];
   currentQuiz=sanitizeQuizQuestions(domain.practices[practiceIndex], domainIndex, practiceIndex).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;resultSaved=false;
+  currentIndex=0;answers=[];detailedAnswers=[];hintUsageLog=[];notificationSent=false;resultSaved=false;
   currentTestMode=`${domain.title} — ${LEVELS[practiceIndex]}`;
   setText('qtitle', domain.title);
   setText('quizBenchmarkTop', LEVELS[practiceIndex]);
@@ -1048,7 +1079,7 @@ function startMock(mockIndex){
   currentQuiz=[];
   perCat.forEach((count,cat)=>{for(let i=0;i<count;i++){currentQuiz.push(buildMockQuestion(mockIndex,cat,i));}});
   currentQuiz=sanitizeQuizQuestions(shuffle(currentQuiz), null, null).map(randomizeQ);
-  currentIndex=0;answers=[];detailedAnswers=[];notificationSent=false;resultSaved=false;
+  currentIndex=0;answers=[];detailedAnswers=[];hintUsageLog=[];notificationSent=false;resultSaved=false;
   currentTestMode=MOCKS[mockIndex].title;
   setText('qtitle', MOCKS[mockIndex].title);
   setText('quizBenchmarkTop', 'Full Mock Exam');
@@ -1078,17 +1109,20 @@ function renderQuestion(){
   const q=currentQuiz[currentIndex];if(!q)return showResults();
   document.getElementById('qtext').textContent=q.text;
   document.getElementById('meta').textContent=`${q.std} · ${q.level} · ${q.skill}`;
-  document.getElementById('hint').textContent=q.hint?'💡 '+q.hint:'';
+  const hintEl=document.getElementById('hint');
+  if(hintEl){hintEl.textContent=q.hint?'💡 '+q.hint:'';hintEl.classList.remove('show');}
+  const hintBtn=document.getElementById('hintBtn');
+  if(hintBtn){hintBtn.style.display=q.hint?'inline-block':'none';hintBtn.disabled=false;hintBtn.classList.remove('used');hintBtn.textContent=q.hintUsed?'💡 Hint used — replacement required':'💡 Need a hint?';}
   document.getElementById('counter').textContent=`Question ${currentIndex+1} of ${currentQuiz.length}`;
-  document.getElementById('progfill').style.width=`${(currentIndex/currentQuiz.length)*100}%`;
+  updateProgressVisual();
   const benchTop=document.getElementById('quizBenchmarkTop'); if(benchTop) benchTop.textContent=q.std;
-  document.getElementById('objectiveBox').textContent=q.hint||'Solve each question carefully, step by step.';
-  document.getElementById('progressText').textContent=`${currentIndex} of ${currentQuiz.length} answered`;
+  document.getElementById('objectiveBox').textContent='Solve the question first. Use the hint only if you truly need help.';
+  document.getElementById('progressText').textContent=getProgressText();
   document.getElementById('categoryBox').textContent=BANKS.standard[q.category]?.title||'Math';
   document.getElementById('masteryText').textContent=q.level;
   document.getElementById('studentFootName').textContent=studentName||'Student';
   const numRow=document.getElementById('numRow');
-  if(numRow){numRow.innerHTML='';for(let n=0;n<Math.min(currentQuiz.length,10);n++){const b=document.createElement('button');b.className='num-pill'+(n===currentIndex?' active':(answers[n]!==undefined?' answered':''));b.textContent=n+1;numRow.appendChild(b);}}
+  if(numRow){numRow.innerHTML='';for(let n=0;n<Math.min(currentQuiz.length,20);n++){const b=document.createElement('button');let cls='num-pill';if(n===currentIndex)cls+=' active';else if(detailedAnswers[n]?.hintUsed)cls+=' hint-used';else if(detailedAnswers[n] && detailedAnswers[n].correct===false)cls+=' wrong';else if(answers[n]!==undefined)cls+=' answered';b.className=cls;b.textContent=n+1;numRow.appendChild(b);}}
   const choices=document.getElementById('choices');choices.innerHTML='';
   q.choices.forEach((choice,i)=>{
     const btn=document.createElement('button');
@@ -1102,10 +1136,84 @@ function renderQuestion(){
   updateLiveScore();
 }
 
+
+function getGradedAnswers(){
+  return detailedAnswers.filter(a=>a && !a.hintUsed);
+}
+function getProgressStats(){
+  const answered=detailedAnswers.filter(Boolean).length;
+  const graded=getGradedAnswers();
+  const correct=graded.filter(a=>a.correct).length;
+  const wrong=graded.filter(a=>a.correct===false).length;
+  const hints=hintUsageLog.length;
+  return {answered,graded:graded.length,correct,wrong,hints,total:currentQuiz.length};
+}
+function getProgressText(){
+  const s=getProgressStats();
+  let text=`${s.answered} of ${s.total} answered · Score: ${s.correct}/${s.graded}`;
+  if(s.wrong>0) text+=` · ${s.wrong} incorrect`;
+  if(s.hints>0) text+=` · ${s.hints} hint${s.hints===1?'':'s'} used`;
+  return text;
+}
+function updateProgressVisual(){
+  const stats=getProgressStats();
+  const fill=document.getElementById('progfill');
+  if(fill){
+    fill.style.width=`${stats.total?Math.round((stats.answered/stats.total)*100):0}%`;
+    fill.classList.toggle('danger', stats.wrong>0);
+    fill.classList.toggle('warning', stats.wrong===0 && stats.hints>0);
+  }
+  const progressText=document.getElementById('progressText');
+  if(progressText){
+    progressText.textContent=getProgressText();
+    progressText.style.color=stats.wrong>0?'#dc2626':(stats.hints>0?'#92400e':'#1f2937');
+    progressText.style.fontWeight=stats.wrong>0||stats.hints>0?'900':'400';
+  }
+}
+function showHintForCurrentQuestion(){
+  const q=currentQuiz[currentIndex];
+  if(!q || !q.hint)return;
+  q.hintUsed=true;
+  const hintEl=document.getElementById('hint');
+  if(hintEl){hintEl.textContent='💡 '+q.hint;hintEl.classList.add('show');}
+  const hintBtn=document.getElementById('hintBtn');
+  if(hintBtn){hintBtn.classList.add('used');hintBtn.textContent='💡 Hint used — this question will not count';}
+  if(!q.hintLogged){
+    q.hintLogged=true;
+    hintUsageLog.push({
+      questionNumber: currentIndex+1,
+      questionText:q.text,
+      hint:q.hint,
+      skill:q.skill,
+      benchmark:q.std,
+      category:q.category,
+      level:q.level,
+      id:q.id
+    });
+  }
+  updateProgressVisual();
+}
+function addReplacementForHintedQuestion(q){
+  if(!q || q.replacementAdded)return;
+  q.replacementAdded=true;
+  const usedIds=new Set(currentQuiz.map(item=>item?.id).filter(Boolean));
+  const replacement=makeTargetedRetryQuestion({
+    category:q.category,
+    level:q.level,
+    skill:q.skill,
+    benchmark:q.std,
+    id:q.id
+  }, usedIds);
+  replacement.isHintReplacement=true;
+  replacement.replacesQuestion=q.id;
+  currentQuiz.push(replacement);
+}
+
 function selectAnswer(choiceIndex){
   const q=currentQuiz[currentIndex];
   const correct=choiceIndex===q.answer;
-  answers[currentIndex]=correct;
+  const scoreEligible=!q.hintUsed;
+  answers[currentIndex]=scoreEligible?correct:null;
   detailedAnswers[currentIndex]={
     correct,
     benchmark:q.std,
@@ -1117,7 +1225,9 @@ function selectAnswer(choiceIndex){
     chosenAnswer:q.choices[choiceIndex],
     correctAnswer:q.choices[q.answer],
     explanation:q.explain,
-    hint:q.hint
+    hint:q.hint,
+    hintUsed:!!q.hintUsed,
+    scoreEligible
   };
   const buttons=document.querySelectorAll('.choice');
   buttons.forEach((btn,i)=>{
@@ -1127,29 +1237,35 @@ function selectAnswer(choiceIndex){
   });
   document.getElementById('fb').classList.add('show');
   if(correct){
-    document.getElementById('fbtitle').textContent='✅ Correct! Great job!';
-    document.getElementById('fbtext').innerHTML=`<br><b>Explanation:</b><br>${q.explain}`;
+    document.getElementById('fbtitle').textContent=scoreEligible?'✅ Correct! Great job!':'💡 Correct after using a hint';
+    document.getElementById('fbtext').innerHTML=`${scoreEligible?'':'<b>This question will not count toward the score because a hint was used.</b><br>A new question from the same level of complexity was added.<br><br>'}<b>Explanation:</b><br>${q.explain}`;
   }else{
     const correctLetter=String.fromCharCode(65+q.answer);
     document.getElementById('fbtitle').textContent='❌ Not quite — let\'s learn from this!';
-    document.getElementById('fbtext').innerHTML=`<b>Correct Answer:</b> ${correctLetter}. ${q.choices[q.answer]}<br><br><b>Explanation:</b><br>${q.explain}<br><br><b>Strategy:</b> ${q.hint||'Read carefully and try step by step.'}`;
+    document.getElementById('fbtext').innerHTML=`${scoreEligible?'':'<b>This question will not count toward the score because a hint was used.</b><br>A new question from the same level of complexity was added.<br><br>'}<b>Correct Answer:</b> ${correctLetter}. ${q.choices[q.answer]}<br><br><b>Explanation:</b><br>${q.explain}<br><br><b>Strategy:</b> ${q.hint||'Read carefully and try step by step.'}`;
   }
-  document.getElementById('progressText').textContent=`${answers.filter(v=>v!==undefined).length} of ${currentQuiz.length} answered`;
+  if(q.hintUsed){addReplacementForHintedQuestion(q);}
+  updateProgressVisual();
   document.getElementById('next').disabled=false;
   updateLiveScore();
 }
 
 function updateLiveScore(){
-  const ans=answers.filter(v=>v!==undefined).length;
-  const correct=answers.filter(Boolean).length;
-  document.getElementById('live').textContent=`Score: ${correct}/${ans}`;
+  const graded=getGradedAnswers();
+  const correct=graded.filter(a=>a.correct).length;
+  const hints=hintUsageLog.length;
+  const el=document.getElementById('live');
+  if(el){
+    el.innerHTML=`Score: ${correct}/${graded.length}`+(hints?` <span class="score-note">· ${hints} hint${hints===1?'':'s'} used, not counted</span>`:'');
+  }
 }
 
 function nextQuestion(){currentIndex++;if(currentIndex>=currentQuiz.length){showResults();}else{renderQuestion();}}
 
 function showResults(){
   clearInterval(timerInterval);
-  const correct=answers.filter(Boolean).length;const total=currentQuiz.length;
+  const gradedAnswers=getGradedAnswers();
+  const correct=gradedAnswers.filter(a=>a.correct).length;const total=gradedAnswers.length;
   const pct=total?Math.round((correct/total)*100):0;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('results').classList.add('active');
@@ -1168,6 +1284,8 @@ function showResults(){
   if(guardianNotice){guardianNotice.style.display='block';guardianNotice.textContent='✅ Assignment completed and marked as COMPLETED. 📨 Result is being sent to your tutor/guardian.';}
   const missedBox=document.getElementById('missedReview');
   if(missedBox){missedBox.innerHTML='';}
+  const hintBox=document.getElementById('hintUsageReview');
+  if(hintBox){hintBox.innerHTML='';}
   if(!resultSaved){
     saveAssignmentProgress(correct,total,pct);
     markAssignmentCompleted(correct,total,pct);
@@ -1187,6 +1305,7 @@ function showResults(){
     }
   }
   renderBreakdown(correct,total);
+  renderHintUsageReview();
   renderMissedReview();
 
   if(!notificationSent){
@@ -1209,7 +1328,7 @@ function showResults(){
 
 function renderBreakdown(correct,total){
   const byCategory={};
-  detailedAnswers.forEach(a=>{if(!a)return;if(!byCategory[a.category])byCategory[a.category]={correct:0,total:0,skills:{}};byCategory[a.category].total++;if(a.correct){byCategory[a.category].correct++;}if(!byCategory[a.category].skills[a.skill])byCategory[a.category].skills[a.skill]={c:0,t:0};byCategory[a.category].skills[a.skill].t++;if(a.correct)byCategory[a.category].skills[a.skill].c++;});
+  detailedAnswers.forEach(a=>{if(!a||a.hintUsed)return;if(!byCategory[a.category])byCategory[a.category]={correct:0,total:0,skills:{}};byCategory[a.category].total++;if(a.correct){byCategory[a.category].correct++;}if(!byCategory[a.category].skills[a.skill])byCategory[a.category].skills[a.skill]={c:0,t:0};byCategory[a.category].skills[a.skill].t++;if(a.correct)byCategory[a.category].skills[a.skill].c++;});
   let html='<h3 style="font-size:1rem;margin-bottom:12px;">📊 Results by Category</h3>';
   Object.keys(byCategory).forEach(catIdx=>{
     const domain=BANKS.standard[Number(catIdx)];const b=byCategory[catIdx];const pct=Math.round((b.correct/b.total)*100);
@@ -1227,8 +1346,21 @@ function escapeHTML(value){
   return String(value ?? '').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 }
 
+
+function renderHintUsageReview(){
+  const box=document.getElementById('hintUsageReview');
+  if(!box)return;
+  if(!hintUsageLog.length){box.innerHTML='';return;}
+  let html='<h3 style="font-size:1rem;margin-bottom:12px;">💡 Hint Usage Report</h3>';
+  hintUsageLog.forEach((h,idx)=>{
+    const domain=BANKS.standard[h.category]?.title||'Math';
+    html+=`<div class="hint-review"><b>Hint Used ${idx+1}</b><br><span style="color:var(--muted);font-size:.85rem;"><b>Question:</b> #${h.questionNumber} · <b>Domain:</b> ${escapeHTML(domain)} · <b>Concept:</b> ${escapeHTML(h.skill)} · <b>Standard:</b> ${escapeHTML(h.benchmark)}</span><br><br><b>Question text:</b><br>${escapeHTML(h.questionText)}<br><br><b>Hint shown:</b><br>${escapeHTML(h.hint)}<br><br><b>Scoring:</b> This question did not count. A replacement question from the same level of complexity was added.</div>`;
+  });
+  box.innerHTML=html;
+}
+
 function getMissedAnswers(){
-  return detailedAnswers.filter(a=>a && !a.correct);
+  return detailedAnswers.filter(a=>a && !a.hintUsed && !a.correct);
 }
 
 function findPracticeIndexFromLevel(levelText){
