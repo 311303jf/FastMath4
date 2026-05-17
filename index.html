@@ -565,7 +565,8 @@ function buildGR(p,i){
     if(qtype===2){
       const angles=[['right',90,'exactly 90°','forms an L shape'],['acute',45,'less than 90°','smaller than a right angle'],['obtuse',120,'greater than 90°','larger than a right angle'],['straight',180,'exactly 180°','forms a straight line'],['right',90,'exactly 90°','like the corner of a square']];
       const [type,deg,desc,hint2]=angles[i%5];
-      return {id,text:`An angle measures ${deg}°. What type of angle is it?`,choices:['obtuse','acute','right','straight'].filter(a=>a!==type).concat([type]).sort(()=>0),answer:['obtuse','acute','right','straight'].indexOf(type),explain:`${deg}° is a ${type} angle — ${desc}.`,std:'MA.4.M.2.1',level:LEVELS[0],hint:'Right = 90°, Acute < 90°, Obtuse > 90°, Straight = 180°',skill:'Classifying angles',category:2};}
+      const angleChoices=['acute','right','obtuse','straight'];
+      return {id,text:`An angle measures ${deg}°. What type of angle is it?`,choices:angleChoices,answer:angleChoices.indexOf(type),explain:`${deg}° is a ${type} angle — ${desc}.`,std:'MA.4.M.2.1',level:LEVELS[0],hint:'Right = 90°, Acute < 90°, Obtuse > 90°, Straight = 180°',skill:'Classifying angles',category:2};}
     // Symmetry
     const symShapes=[['square',4],['circle','infinite'],['rectangle',2],['equilateral triangle',3],['letter A',1]];
     const [shape,lines]=symShapes[i%5];
@@ -780,6 +781,21 @@ function sanitizeQuestion(q, fallbackCategory=0, fallbackLevel=0, fallbackIndex=
   const rawChoices=Array.isArray(q.choices)?q.choices.map(normalizeChoice):['A','B','C','D'];
   let answerIndex=Number.isInteger(q.answer)?q.answer:0;
   if(answerIndex<0 || answerIndex>=rawChoices.length) answerIndex=0;
+
+  // Semantic safety guard for angle classification questions.
+  // This prevents a wrong answer key from ever marking acute/right/obtuse/straight incorrectly.
+  const angleMatch=q.text.match(/angle measures\s*(\d+)°/i);
+  if(angleMatch && rawChoices.some(c=>['acute','right','obtuse','straight'].includes(String(c).toLowerCase()))){
+    const degVal=Number(angleMatch[1]);
+    let expectedAngleType='';
+    if(degVal===90) expectedAngleType='right';
+    else if(degVal>0 && degVal<90) expectedAngleType='acute';
+    else if(degVal>90 && degVal<180) expectedAngleType='obtuse';
+    else if(degVal===180) expectedAngleType='straight';
+    const fixedIndex=rawChoices.findIndex(c=>String(c).toLowerCase()===expectedAngleType);
+    if(fixedIndex>=0) answerIndex=fixedIndex;
+  }
+
   const correct=normalizeChoice(rawChoices[answerIndex]);
 
   const finalChoices=[];
