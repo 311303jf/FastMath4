@@ -1207,36 +1207,132 @@ function findPracticeIndexFromLevel(levelText){
   return Math.max(0, Math.min(4, parseInt(m[1],10)-1));
 }
 
+
+function makeTargetedRetryQuestion(missed, usedIds){
+  const category=Number.isInteger(missed.category)?missed.category:0;
+  const preferredLevel=findPracticeIndexFromLevel(missed.level);
+  const level=LEVELS[preferredLevel] || missed.level || 'Retry Practice';
+  const skill=String(missed.skill||'Review skill');
+  const std=String(missed.benchmark||'MA.4');
+  const key=skill.toLowerCase();
+  const salt=Date.now()%100000 + usedIds.size*17;
+  let q;
+
+  // Category 0: Number Sense & Operations
+  if(category===0){
+    if(key.includes('division') || key.includes('remainder')){
+      const divisor=3 + (salt%6);
+      const quotient=12 + (salt%18);
+      const remainder=key.includes('remainder') ? (salt%divisor) : 0;
+      const total=divisor*quotient+remainder;
+      q={id:`RETRY-NSO-DIV-${salt}`,text:`A teacher has ${total} pencils to share equally among ${divisor} tables. How many pencils does each table get${remainder?' and how many are left over':''}?`,choices:remainder?[`${quotient} remainder ${remainder}`,`${quotient+1} remainder ${remainder}`,`${quotient} remainder ${Math.max(0,remainder-1)}`,`${quotient-1} remainder ${remainder}`]:[quotient,quotient+1,quotient-1,total-divisor].map(String),answer:0,explain:`Divide ${total} by ${divisor}. ${divisor} × ${quotient} = ${divisor*quotient}${remainder?`, and ${total} - ${divisor*quotient} = ${remainder} left over`:''}.`,std,level,hint:'Use division. Check by multiplying.',skill,category};
+    }else if(key.includes('round')){
+      const num=2300 + (salt%6000);
+      const ans=Math.round(num/100)*100;
+      q={id:`RETRY-NSO-ROUND-${salt}`,text:`Round ${num.toLocaleString()} to the nearest hundred.`,choices:[ans,ans+100,Math.max(0,ans-100),Math.round(num/1000)*1000].map(String),answer:0,explain:`To round to the nearest hundred, look at the tens digit. ${num.toLocaleString()} rounds to ${ans.toLocaleString()}.`,std,level,hint:'Look at the tens digit: 5 or more rounds up.',skill,category};
+    }else{
+      const a=18+(salt%32), b=3+(salt%7), ans=a*b;
+      q={id:`RETRY-NSO-MULT-${salt}`,text:`A school has ${b} boxes with ${a} markers in each box. How many markers are there in all?`,choices:[ans,ans+a,Math.max(0,ans-b),a+b].map(String),answer:0,explain:`Multiply the number of boxes by the number of markers in each box: ${b} × ${a} = ${ans}.`,std,level,hint:'Use groups × items in each group.',skill,category};
+    }
+  }
+
+  // Category 1: Fractions, Decimals & Algebraic Reasoning
+  if(!q && category===1){
+    if(key.includes('decimal') || key.includes('money')){
+      const cents=[25,35,40,45,50,55,60,75][salt%8];
+      const correct=12+(salt%12);
+      const bonus=1+(salt%4);
+      const earned=(correct*cents/100)+bonus;
+      q={id:`RETRY-FR-MONEY-${salt}`,text:`A student earns $${(cents/100).toFixed(2)} for each correct answer. She gets ${correct} correct answers and earns a $${bonus}.00 bonus. How much does she earn in all?`,choices:[earned.toFixed(2),(earned+0.5).toFixed(2),Math.max(0,earned-0.5).toFixed(2),(correct+cents/100).toFixed(2)].map(v=>'$'+v),answer:0,explain:`Correct-answer money: ${correct} × $${(cents/100).toFixed(2)} = $${(correct*cents/100).toFixed(2)}. Add bonus: $${(correct*cents/100).toFixed(2)} + $${bonus}.00 = $${earned.toFixed(2)}.`,std,level,hint:'Multiply first, then add the bonus.',skill,category};
+    }else if(key.includes('fraction of a set') || key.includes('fraction of a whole')){
+      const denominators=[4,5,6,8];
+      const d=denominators[salt%denominators.length];
+      const whole=d*(4+(salt%6));
+      const n=1+(salt%(d-1));
+      const ans=whole/d*n;
+      q={id:`RETRY-FR-SET-${salt}`,text:`In a class of ${whole} students, ${n}/${d} joined math club. How many students joined math club?`,choices:[ans,ans+n,Math.max(0,ans-n),whole-ans].map(String),answer:0,explain:`Find ${n}/${d} of ${whole}: ${whole} ÷ ${d} = ${whole/d}, then ${whole/d} × ${n} = ${ans}.`,std,level,hint:'Divide by the denominator, then multiply by the numerator.',skill,category};
+    }else if(key.includes('pattern') || key.includes('rule') || key.includes('input')){
+      const mult=2+(salt%3), add=1+(salt%5), input=4+(salt%8), ans=input*mult+add;
+      q={id:`RETRY-FR-RULE-${salt}`,text:`A rule says: multiply the input by ${mult}, then add ${add}. What is the output when the input is ${input}?`,choices:[ans,ans+add,Math.max(0,ans-mult),input+add].map(String),answer:0,explain:`Apply the rule: ${input} × ${mult} = ${input*mult}; ${input*mult} + ${add} = ${ans}.`,std,level,hint:'Follow the rule in order.',skill,category};
+    }else{
+      const d=[4,5,6,8,10][salt%5];
+      const a=1+(salt%(d-2));
+      const b=1+((salt*2)%(d-a-1 || 1));
+      const ans=a+b;
+      q={id:`RETRY-FR-ADD-${salt}`,text:`What is ${a}/${d} + ${b}/${d}?`,choices:[`${ans}/${d}`,`${ans}/${d*2}`,`${Math.max(1,ans-1)}/${d}`,`${Math.min(d,ans+1)}/${d}`],answer:0,explain:`The denominators are the same, so add the numerators: ${a} + ${b} = ${ans}. The answer is ${ans}/${d}.`,std,level,hint:'Same denominator: add the numerators.',skill,category};
+    }
+  }
+
+  // Category 2: Geometry & Measurement
+  if(!q && category===2){
+    if(key.includes('perimeter') || key.includes('fencing')){
+      const l=8+(salt%12), w=4+(salt%8), ans=2*(l+w);
+      q={id:`RETRY-GR-PERIM-${salt}`,text:`A rectangle is ${l} feet long and ${w} feet wide. What is its perimeter?`,choices:[ans,l*w,ans+2,Math.max(0,ans-2)].map(String),answer:0,explain:`Perimeter means distance around: 2 × (${l} + ${w}) = 2 × ${l+w} = ${ans} feet.`,std,level,hint:'Perimeter = add all sides, or use 2(l+w).',skill,category};
+    }else if(key.includes('angle')){
+      const total=(salt%2)?90:180;
+      const known=(total===90)?(25+(salt%40)):(60+(salt%70));
+      const ans=total-known;
+      q={id:`RETRY-GR-ANGLE-${salt}`,text:`Two angles form a ${total}° angle. One angle is ${known}°. What is the other angle?`,choices:[ans,ans+5,Math.max(0,ans-5),known].map(v=>`${v}°`),answer:0,explain:`The two angles must add to ${total}°. Missing angle = ${total} - ${known} = ${ans}°.`,std,level,hint:'Subtract the known angle from the total.',skill,category};
+    }else{
+      const l=6+(salt%14), w=3+(salt%9), ans=l*w;
+      q={id:`RETRY-GR-AREA-${salt}`,text:`A rectangular garden is ${l} meters long and ${w} meters wide. What is its area?`,choices:[ans,2*(l+w),ans+l,Math.max(1,ans-w)].map(String),answer:0,explain:`Area = length × width = ${l} × ${w} = ${ans} square meters.`,std,level,hint:'Area uses square units. Multiply length by width.',skill,category};
+    }
+  }
+
+  // Category 3: Data Analysis
+  if(!q && category===3){
+    if(key.includes('range')){
+      const vals=[8+(salt%5),12+(salt%8),20+(salt%10),15+(salt%7),10+(salt%4)];
+      const ans=Math.max(...vals)-Math.min(...vals);
+      q={id:`RETRY-DP-RANGE-${salt}`,text:`Find the range of this data set: ${vals.join(', ')}.`,choices:[ans,Math.max(...vals),Math.min(...vals),ans+2].map(String),answer:0,explain:`Range = highest value - lowest value = ${Math.max(...vals)} - ${Math.min(...vals)} = ${ans}.`,std,level,hint:'Range means maximum minus minimum.',skill,category};
+    }else{
+      const mode=4+(salt%7);
+      const vals=[mode,7+(salt%5),mode,9+(salt%6),12+(salt%4),mode];
+      q={id:`RETRY-DP-MODE-${salt}`,text:`Find the mode of this data set: ${vals.join(', ')}.`,choices:[mode,Math.max(...vals),Math.min(...vals),Math.max(...vals)-Math.min(...vals)].map(String),answer:0,explain:`Mode means the value that appears most often. ${mode} appears the most.`,std,level,hint:'Mode = most frequent value.',skill,category};
+    }
+  }
+
+  if(!q) q=makeFallbackUniqueQuestion(category, preferredLevel, salt);
+  q=sanitizeQuestion(q, category, preferredLevel, salt);
+  q.id=`${q.id}-TARGETED`;
+  while(usedIds.has(q.id)) q.id += 'X';
+  usedIds.add(q.id);
+  return randomizeQ(q);
+}
+
 function generateNewQuestionForMissedConcept(missed, usedIds){
   const category=Number.isInteger(missed.category)?missed.category:0;
   const preferredLevel=findPracticeIndexFromLevel(missed.level);
   const domain=BANKS.standard[category];
-  if(!domain)return null;
+  if(!domain)return makeTargetedRetryQuestion(missed, usedIds);
 
   const all=[];
   domain.practices.forEach((practice,levelIdx)=>{
     practice.forEach(q=>{
-      if(q && q.skill===missed.skill && q.id!==missed.id && !usedIds.has(q.id)){
+      if(q && q.id!==missed.id && !usedIds.has(q.id)){
         all.push({...q, retrySourceLevel:levelIdx});
       }
     });
   });
 
-  const sameLevel=all.filter(q=>q.retrySourceLevel===preferredLevel);
-  const pool=sameLevel.length?sameLevel:all;
-  if(pool.length){
-    const chosen=pool[Math.floor(Math.random()*pool.length)];
-    usedIds.add(chosen.id);
-    return randomizeQ(chosen);
+  const candidateGroups=[
+    all.filter(q=>q.skill===missed.skill && q.retrySourceLevel===preferredLevel),
+    all.filter(q=>q.skill===missed.skill),
+    all.filter(q=>q.std===missed.benchmark && q.retrySourceLevel===preferredLevel),
+    all.filter(q=>q.std===missed.benchmark),
+    all.filter(q=>q.retrySourceLevel===preferredLevel),
+    all
+  ];
+
+  for(const pool of candidateGroups){
+    if(pool.length){
+      const chosen=pool[Math.floor(Math.random()*pool.length)];
+      usedIds.add(chosen.id);
+      return randomizeQ(sanitizeQuestion(chosen, category, preferredLevel, usedIds.size));
+    }
   }
 
-  const fallbackPool=(domain.practices[preferredLevel]||[]).filter(q=>q && q.id!==missed.id && !usedIds.has(q.id));
-  if(fallbackPool.length){
-    const chosen=fallbackPool[Math.floor(Math.random()*fallbackPool.length)];
-    usedIds.add(chosen.id);
-    return randomizeQ(chosen);
-  }
-  return null;
+  return makeTargetedRetryQuestion(missed, usedIds);
 }
 
 function renderMissedReview(){
